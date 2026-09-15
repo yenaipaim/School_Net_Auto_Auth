@@ -20,4 +20,12 @@ public sealed class AppSettingsTests
         var settings = AppSettings.CreateDefault() with { RetryInterval = TimeSpan.Zero, MaximumAttempts = 0 };
         Assert.False(settings.Validate().IsValid);
     }
+
+    [Fact]
+    public void Validate_RejectsRelativeProbeWithoutThrowing()
+    {
+        var settings = AppSettings.CreateDefault() with { ProbeUri = new Uri("relative", UriKind.Relative) };
+        var result = settings.Validate();
+        Assert.False(result.IsValid);
+    }
 }

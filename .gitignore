@@ -6,5 +6,6 @@ NuGet/
 **/bin/
 **/obj/
 artifacts/
+src/SchoolNetAutoAuth.Installer/payload.zip
 *.user
 *.suo
