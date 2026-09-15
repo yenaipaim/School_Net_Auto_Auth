@@ -1,0 +1,10 @@
+.dotnet/
+.tools/
+.dotnet-home/
+NuGet/
+.superpowers/sdd/
+**/bin/
+**/obj/
+artifacts/
+*.user
+*.suo
