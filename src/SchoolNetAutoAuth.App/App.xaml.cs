@@ -20,6 +20,7 @@ public partial class App : System.Windows.Application
         var background = e.Args.Contains("--background", StringComparer.OrdinalIgnoreCase);
         _window = new MainWindow(background);
         _window.Show();
+        if (background) _window.Hide();
     }
 
     protected override void OnExit(ExitEventArgs e)
