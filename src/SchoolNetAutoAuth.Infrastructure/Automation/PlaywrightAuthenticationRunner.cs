@@ -14,7 +14,7 @@ public sealed class PlaywrightAuthenticationRunner(
 {
     public async Task<AuthenticationResult> AuthenticateAsync(AppSettings settings, AuthenticationAttempt attempt, CancellationToken cancellationToken)
     {
-        if (settings.RecordedFlow is null || string.IsNullOrWhiteSpace(settings.SelectedProvider) || !settings.RecordedFlow.Providers.TryGetValue(settings.SelectedProvider, out var provider))
+        if (settings.RecordedSequence is null)
             return new(AuthenticationOutcome.RecordingRequired, "recording_missing");
 
         EdgeSession? session = null;
@@ -22,10 +22,14 @@ public sealed class PlaywrightAuthenticationRunner(
         {
             session = await sessions.LaunchAsync(false, cancellationToken);
             var page = session.Context.Pages.FirstOrDefault() ?? await session.Context.NewPageAsync();
+            var pagesByKey = new Dictionary<string, IPage>(StringComparer.Ordinal)
+            {
+                [settings.RecordedSequence.Credentials.PageKey] = page
+            };
             var timeout = (float)settings.AuthenticationTimeout.TotalMilliseconds;
             await page.GotoAsync(settings.PortalUri.ToString(), new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = timeout }).WaitAsync(cancellationToken);
-            var username = resolver.Resolve(page, settings.RecordedFlow.Username);
-            var password = resolver.Resolve(page, settings.RecordedFlow.Password);
+            var username = resolver.Resolve(page, settings.RecordedSequence.Credentials.Username);
+            var password = resolver.Resolve(page, settings.RecordedSequence.Credentials.Password);
             await username.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = timeout }).WaitAsync(cancellationToken);
             await password.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = timeout }).WaitAsync(cancellationToken);
             await Task.Delay(1500, cancellationToken);
@@ -38,10 +42,18 @@ public sealed class PlaywrightAuthenticationRunner(
                 await password.FillAsync(credential.Password).WaitAsync(cancellationToken);
             }
 
-            await resolver.Resolve(page, settings.RecordedFlow.Login).ClickAsync(new() { Timeout = timeout }).WaitAsync(cancellationToken);
-            var providerLocator = resolver.Resolve(page, provider);
-            await providerLocator.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = timeout }).WaitAsync(cancellationToken);
-            await providerLocator.ClickAsync().WaitAsync(cancellationToken);
+            foreach (var step in RecordedSequenceOrderer.Order(settings.RecordedSequence.Clicks))
+            {
+                var targetPage = await ResolvePageAsync(session.Context, pagesByKey, step, settings.AuthenticationTimeout, cancellationToken);
+                if (targetPage is null)
+                    return new(AuthenticationOutcome.RecordingRequired, "recorded_page_unavailable");
+                var locator = resolver.Resolve(targetPage, step.Locator);
+                if (await locator.CountAsync() != 1)
+                    return new(AuthenticationOutcome.RecordingRequired, "recorded_element_unavailable");
+                await locator.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = timeout }).WaitAsync(cancellationToken);
+                await locator.ClickAsync().WaitAsync(cancellationToken);
+                await Task.Delay(250, cancellationToken);
+            }
 
             var deadline = DateTime.UtcNow + settings.AuthenticationTimeout;
             while (DateTime.UtcNow < deadline)
@@ -69,5 +81,29 @@ public sealed class PlaywrightAuthenticationRunner(
             return new(AuthenticationOutcome.Failed, "browser_failed");
         }
         finally { if (session is not null) await session.DisposeAsync(); }
+    }
+
+    private static async Task<IPage?> ResolvePageAsync(
+        IBrowserContext context,
+        IDictionary<string, IPage> pagesByKey,
+        RecordedClickStep step,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (pagesByKey.TryGetValue(step.PageKey, out var mapped) && !mapped.IsClosed && RecordedPageMatcher.Matches(mapped.Url, step.UrlPattern))
+                return mapped;
+
+            var candidate = context.Pages.FirstOrDefault(p => !p.IsClosed && RecordedPageMatcher.Matches(p.Url, step.UrlPattern));
+            if (candidate is not null)
+            {
+                pagesByKey[step.PageKey] = candidate;
+                return candidate;
+            }
+            await Task.Delay(100, cancellationToken);
+        }
+        return null;
     }
 }

@@ -69,6 +69,7 @@ internal static class Program
         dynamic shell = Activator.CreateInstance(shellType)!;
         dynamic shortcut = shell.CreateShortcut(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), AppName + ".lnk"));
         shortcut.TargetPath = appExe;
+        shortcut.IconLocation = appExe + ",0";
         shortcut.WorkingDirectory = Path.GetDirectoryName(appExe);
         shortcut.Description = AppName;
         shortcut.Save();

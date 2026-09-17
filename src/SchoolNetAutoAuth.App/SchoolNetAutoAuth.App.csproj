@@ -7,9 +7,13 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <PublishReadyToRun>true</PublishReadyToRun>
+    <ApplicationIcon>..\..\img\图标.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../SchoolNetAutoAuth.Core/SchoolNetAutoAuth.Core.csproj" />
     <ProjectReference Include="../SchoolNetAutoAuth.Infrastructure/SchoolNetAutoAuth.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\img\图标.ico" Link="App.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
   </ItemGroup>
 </Project>

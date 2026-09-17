@@ -5,17 +5,16 @@ public sealed record AppSettings(
     string TargetSsid,
     Uri PortalUri,
     Uri ProbeUri,
-    string? SelectedProvider,
     TimeSpan NetworkCheckInterval,
     TimeSpan ProbeTimeout,
     TimeSpan AuthenticationTimeout,
     TimeSpan RetryInterval,
     int MaximumAttempts,
     bool StartWithWindows,
-    RecordedPortalFlow? RecordedFlow)
+    RecordedClickSequence? RecordedSequence)
 {
     public static AppSettings CreateDefault() => new(
-        1, "NSU-SDN", new Uri("http://2.2.2.2"), new Uri("https://www.yuanshen.com"), null,
+        2, "NSU-SDN", new Uri("http://2.2.2.2"), new Uri("https://www.yuanshen.com"),
         TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(8), TimeSpan.FromSeconds(45), TimeSpan.FromSeconds(10), 3, true, null);
 
     public ValidationResult Validate()

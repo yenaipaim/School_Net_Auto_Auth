@@ -1,37 +1,16 @@
 <Window x:Class="SchoolNetAutoAuth.App.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="校园网自动认证" Width="720" Height="560" MinWidth="640" MinHeight="480"
+        Title="校园网自动认证" Icon="App.ico" Width="720" Height="560" MinWidth="640" MinHeight="480"
         WindowStartupLocation="CenterScreen">
     <Grid Margin="20">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <TextBlock Text="校园网自动认证" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,16"/>
         <TabControl Grid.Row="1">
-            <TabItem Header="常规">
-                <Grid Margin="12">
-                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                    <TextBlock Text="目标 Wi-Fi" VerticalAlignment="Center" Margin="0,0,8,8"/><TextBox x:Name="SsidBox" Grid.Column="1" Margin="0,0,0,8"/>
-                    <TextBlock Text="认证地址" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,8,8"/><TextBox x:Name="PortalBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"/>
-                    <TextBlock Text="联网检测地址" Grid.Row="2" VerticalAlignment="Center" Margin="0,0,8,8"/><TextBox x:Name="ProbeBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,8"/>
-                    <CheckBox x:Name="StartupBox" Content="登录 Windows 后自动运行" Grid.Row="3" Grid.Column="1" Margin="0,4,0,8"/>
-                    <TextBlock x:Name="StatusText" Grid.Row="4" Grid.ColumnSpan="2" TextWrapping="Wrap" Foreground="#555" Margin="0,12,0,0"/>
-                </Grid>
-            </TabItem>
-            <TabItem Header="认证">
-                <Grid Margin="12">
-                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                    <TextBlock Text="运营商" VerticalAlignment="Center" Margin="0,0,8,8"/><ComboBox x:Name="ProviderBox" Grid.Column="1" Margin="0,0,0,8" IsEditable="True"><ComboBoxItem>中国移动</ComboBoxItem><ComboBoxItem>中国联通</ComboBoxItem><ComboBoxItem>中国电信</ComboBoxItem><ComboBoxItem>校园网</ComboBoxItem></ComboBox>
-                    <TextBlock Text="账号" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,8,8"/><TextBox x:Name="UsernameBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"/>
-                    <TextBlock Text="密码" Grid.Row="2" VerticalAlignment="Center" Margin="0,0,8,8"/><PasswordBox x:Name="PasswordBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,8"/>
-                    <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal"><Button Content="保存凭据" Click="SaveCredential_Click" Padding="14,6" Margin="0,0,8,0"/><Button Content="删除凭据" Click="DeleteCredential_Click" Padding="14,6"/></StackPanel>
-                    <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,12,0,0"><Button Content="重新录制" Click="Record_Click" Padding="14,6" Margin="0,0,8,0"/><Button Content="测试认证" Click="Authenticate_Click" Padding="14,6"/></StackPanel>
-                </Grid>
-            </TabItem>
-            <TabItem Header="重试">
-                <Grid Margin="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="重试间隔（秒）" Margin="0,0,8,8"/><TextBox x:Name="RetryIntervalBox" Grid.Column="1" Margin="0,0,0,8"/><TextBlock Text="最大重试次数" Grid.Row="1" Margin="0,0,8,8"/><TextBox x:Name="AttemptsBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"/><TextBlock Text="认证超时（秒）" Grid.Row="2" Margin="0,0,8,8"/><TextBox x:Name="AuthTimeoutBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,8"/></Grid>
-            </TabItem>
+            <TabItem Header="常规"><Grid Margin="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="目标 Wi-Fi" VerticalAlignment="Center" Margin="0,0,8,8"/><TextBox x:Name="SsidBox" Grid.Column="1" Margin="0,0,0,8"/><TextBlock Text="认证地址" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,8,8"/><TextBox x:Name="PortalBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"/><TextBlock Text="联网检测地址" Grid.Row="2" VerticalAlignment="Center" Margin="0,0,8,8"/><TextBox x:Name="ProbeBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,8"/><CheckBox x:Name="StartupBox" Content="登录 Windows 后自动运行" Grid.Row="3" Grid.Column="1" Margin="0,4,0,8"/><TextBlock x:Name="StatusText" Grid.Row="4" Grid.ColumnSpan="2" TextWrapping="Wrap" Foreground="#555" Margin="0,12,0,0"/></Grid></TabItem>
+            <TabItem Header="认证流程"><Grid Margin="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><TextBlock Text="首次录制时请按真实认证流程点击页面控件；账号和密码只记录定位，不会记录输入内容。" TextWrapping="Wrap" Margin="0,0,0,12"/><StackPanel Grid.Row="1" Orientation="Horizontal"><Button x:Name="StartRecordButton" Content="开始录制" Click="StartRecord_Click" Padding="14,6" Margin="0,0,8,0"/><Button x:Name="StopRecordButton" Content="结束录制" Click="StopRecord_Click" Padding="14,6" IsEnabled="False" Margin="0,0,8,0"/><Button Content="删除选中步骤" Click="DeleteStep_Click" Padding="14,6" Margin="0,0,8,0"/><Button Content="清除录制" Click="ClearRecord_Click" Padding="14,6"/></StackPanel><ListBox x:Name="StepsList" Grid.Row="2" Margin="0,12,0,0" DisplayMemberPath="Description"/></Grid></TabItem>
+            <TabItem Header="凭据"><Grid Margin="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="账号" VerticalAlignment="Center" Margin="0,0,8,8"/><TextBox x:Name="UsernameBox" Grid.Column="1" Margin="0,0,0,8"/><TextBlock Text="密码" Grid.Row="1" VerticalAlignment="Center" Margin="0,0,8,8"/><PasswordBox x:Name="PasswordBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"/><StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal"><Button Content="保存凭据" Click="SaveCredential_Click" Padding="14,6" Margin="0,0,8,0"/><Button Content="删除凭据" Click="DeleteCredential_Click" Padding="14,6"/></StackPanel></Grid></TabItem>
+            <TabItem Header="重试"><Grid Margin="12"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="重试间隔（秒）" Margin="0,0,8,8"/><TextBox x:Name="RetryIntervalBox" Grid.Column="1" Margin="0,0,0,8"/><TextBlock Text="最大重试次数" Grid.Row="1" Margin="0,0,8,8"/><TextBox x:Name="AttemptsBox" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"/><TextBlock Text="认证超时（秒）" Grid.Row="2" Margin="0,0,8,8"/><TextBox x:Name="AuthTimeoutBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,8"/></Grid></TabItem>
         </TabControl>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0"><Button Content="立即认证" Click="Authenticate_Click" Padding="18,7" Margin="0,0,8,0"/><Button Content="保存设置" Click="Save_Click" Padding="18,7"/></StackPanel>
     </Grid>

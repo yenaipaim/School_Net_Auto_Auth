@@ -8,6 +8,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <AssemblyName>SchoolNetAutoAuth.Setup</AssemblyName>
+    <ApplicationIcon>..\..\img\图标.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="payload.zip" LogicalName="SchoolNetAutoAuth.payload.zip" />
