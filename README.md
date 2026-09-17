@@ -14,6 +14,12 @@
 
 普通配置文件不保存账号或密码。凭据只保存在 Windows 凭据管理器或 Edge 专用配置中；程序默认不生成截图、视频或 Playwright Trace。
 
+# 疑问
+
+有任何疑问或者简介请加入下方群聊
+
+<img src="C:\Users\liany\Pictures\QQ.png" style="zoom: 25%;" />
+
 ## 本地构建
 
 项目使用 `.dotnet\dotnet.exe`（SDK 8.0.425）和根目录 `NuGet.Config`。发布命令：
