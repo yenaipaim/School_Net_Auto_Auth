@@ -18,7 +18,7 @@
 
 有任何疑问或者简介请加入下方群聊
 
-<img src="C:\Users\liany\Pictures\QQ.png" style="zoom: 25%;" />
+<img src="F:\yenaipaim\codex\School_Net\img\QQ.png" style="zoom: 33%;" />
 
 ## 本地构建
 
