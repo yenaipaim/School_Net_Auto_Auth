@@ -11,6 +11,6 @@
     <ApplicationIcon>..\..\img\图标.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="payload.zip" LogicalName="SchoolNetAutoAuth.payload.zip" />
+    <EmbeddedResource Include="payload.zip" LogicalName="SchoolNetAutoAuth.payload.zip" Condition="Exists('payload.zip')" />
   </ItemGroup>
 </Project>

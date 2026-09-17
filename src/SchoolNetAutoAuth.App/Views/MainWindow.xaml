@@ -1,7 +1,7 @@
 <Window x:Class="SchoolNetAutoAuth.App.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="校园网自动认证" Icon="App.ico" Width="720" Height="560" MinWidth="640" MinHeight="480"
+        Title="校园网自动认证" Width="720" Height="560" MinWidth="640" MinHeight="480"
         WindowStartupLocation="CenterScreen">
     <Grid Margin="20">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
