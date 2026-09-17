@@ -20,7 +20,7 @@
 
 有任何疑问或者简介请加入下方群聊
 
-<img src="img\QQ.png" style="zoom: 25%;" />
+<img src="img\QQ.png" width = "33%" />
 
 ## 本地构建
 
