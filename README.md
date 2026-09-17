@@ -4,6 +4,8 @@
 
 ## 使用流程
 
+视频教程[SANN演示视频_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV12eeg6bEcg/?vd_source=6bd5ae9c5fdcebb1777c3a0dd437f087)
+
 1. 打开设置，确认默认 Wi-Fi `NSU-SDN`、入口 `http://2.2.2.2` 和检测地址 `https://www.yuanshen.com`。
 2. 账号密码可保存到 Windows 凭据管理器；也可以在专用 Edge 中保存，浏览器自动填充优先。
 3. 点击“开始录制”，先按提示选择账号框和密码框，再按真实认证流程完成所有必要点击。
