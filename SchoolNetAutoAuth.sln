@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolNetAutoAuth.App.Tests
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolNetAutoAuth.Installer", "src\SchoolNetAutoAuth.Installer\SchoolNetAutoAuth.Installer.csproj", "{20EBDE09-F548-4550-819F-C5CADA5EDEB4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolNetAutoAuth.Uninstaller", "src\SchoolNetAutoAuth.Uninstaller\SchoolNetAutoAuth.Uninstaller.csproj", "{4C62933A-DAB3-48EB-8B08-8DF3CAF437C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,10 @@ Global
 		{20EBDE09-F548-4550-819F-C5CADA5EDEB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20EBDE09-F548-4550-819F-C5CADA5EDEB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{20EBDE09-F548-4550-819F-C5CADA5EDEB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C62933A-DAB3-48EB-8B08-8DF3CAF437C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C62933A-DAB3-48EB-8B08-8DF3CAF437C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C62933A-DAB3-48EB-8B08-8DF3CAF437C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C62933A-DAB3-48EB-8B08-8DF3CAF437C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{2BB1BA93-0614-4BC5-8DFC-3E8CEC22AF5D} = {0E9E6A39-ED1C-4F5F-BA4F-8B8D70CD879E}
@@ -67,5 +73,6 @@ Global
 		{2772E24E-5BBA-4750-B237-49EA50391CD6} = {84F6326D-A2D2-4453-816F-72462EDB9FFF}
 		{5DD93FC8-7DD6-41BE-BAA4-3D929C2A3EC9} = {84F6326D-A2D2-4453-816F-72462EDB9FFF}
 		{20EBDE09-F548-4550-819F-C5CADA5EDEB4} = {0E9E6A39-ED1C-4F5F-BA4F-8B8D70CD879E}
+		{4C62933A-DAB3-48EB-8B08-8DF3CAF437C1} = {0E9E6A39-ED1C-4F5F-BA4F-8B8D70CD879E}
 	EndGlobalSection
 EndGlobal

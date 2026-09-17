@@ -23,3 +23,7 @@ powershell -ExecutionPolicy Bypass -File scripts\publish.ps1
 ```
 
 脚本会生成自包含应用，并使用纯 .NET 安装器生成 `artifacts\installer\校园网自动认证-Setup.exe`。安装器写入当前用户目录，不要求管理员权限。
+
+## 卸载
+
+可从 Windows“已安装的应用”或开始菜单中的“卸载校园网自动认证”运行专用卸载程序。卸载器默认保留账号凭据、录制配置和 Edge 专用登录状态；只有主动勾选“同时删除用户数据”时才会一并清除。

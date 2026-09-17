@@ -18,8 +18,7 @@ internal static class Program
         Forms.Application.SetCompatibleTextRenderingDefault(false);
         try
         {
-            if (args.Contains("--uninstall", StringComparer.OrdinalIgnoreCase)) Uninstall();
-            else Install();
+            Install();
         }
         catch (Exception ex) { Forms.MessageBox.Show($"操作失败：{ex.Message}", AppName, Forms.MessageBoxButtons.OK, Forms.MessageBoxIcon.Error); }
     }
@@ -32,9 +31,9 @@ internal static class Program
         using var archive = new ZipArchive(payload, ZipArchiveMode.Read);
         archive.ExtractToDirectory(target, overwriteFiles: true);
 
-        var installedSetup = Path.Combine(target, "Uninstall.exe");
-        File.Copy(Environment.ProcessPath ?? throw new InvalidOperationException("无法确定安装器路径。"), installedSetup, overwrite: true);
         var appExe = Path.Combine(target, ExeName);
+        var uninstallerExe = Path.Combine(target, "Uninstall.exe");
+        if (!File.Exists(uninstallerExe)) throw new FileNotFoundException("安装包中缺少卸载程序。", uninstallerExe);
         using (var run = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run"))
             run.SetValue("CampusNetworkAutoAuth", $"\"{appExe}\" --background");
         using (var uninstall = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\SchoolNetAutoAuth"))
@@ -43,27 +42,18 @@ internal static class Program
             uninstall.SetValue("DisplayVersion", "0.1.0");
             uninstall.SetValue("Publisher", "SchoolNetAutoAuth");
             uninstall.SetValue("InstallLocation", target);
-            uninstall.SetValue("UninstallString", $"\"{installedSetup}\" --uninstall");
+            uninstall.SetValue("DisplayIcon", appExe);
+            uninstall.SetValue("UninstallString", $"\"{uninstallerExe}\"");
+            uninstall.SetValue("QuietUninstallString", $"\"{uninstallerExe}\" --quiet");
             uninstall.SetValue("NoModify", 1, RegistryValueKind.DWord);
             uninstall.SetValue("NoRepair", 1, RegistryValueKind.DWord);
         }
-        CreateShortcut(appExe);
+        CreateShortcuts(appExe, uninstallerExe);
         Process.Start(new ProcessStartInfo(appExe) { UseShellExecute = true });
         Forms.MessageBox.Show("安装完成，程序已启动并驻留系统托盘。", AppName, Forms.MessageBoxButtons.OK, Forms.MessageBoxIcon.Information);
     }
 
-    private static void Uninstall()
-    {
-        using (var run = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", writable: true)) run?.DeleteValue("CampusNetworkAutoAuth", false);
-        Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\SchoolNetAutoAuth", false);
-        var shortcut = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), AppName + ".lnk");
-        if (File.Exists(shortcut)) File.Delete(shortcut);
-        var directory = InstallDirectory();
-        Process.Start(new ProcessStartInfo("cmd.exe", $"/c ping 127.0.0.1 -n 3 >nul & rmdir /s /q \"{directory}\"") { CreateNoWindow = true, UseShellExecute = false });
-        Forms.MessageBox.Show("卸载已开始。用户配置和 Edge 专用登录状态仍保留在本地应用数据目录。", AppName, Forms.MessageBoxButtons.OK, Forms.MessageBoxIcon.Information);
-    }
-
-    private static void CreateShortcut(string appExe)
+    private static void CreateShortcuts(string appExe, string uninstallerExe)
     {
         var shellType = Type.GetTypeFromProgID("WScript.Shell") ?? throw new InvalidOperationException("无法创建开始菜单快捷方式。");
         dynamic shell = Activator.CreateInstance(shellType)!;
@@ -73,6 +63,13 @@ internal static class Program
         shortcut.WorkingDirectory = Path.GetDirectoryName(appExe);
         shortcut.Description = AppName;
         shortcut.Save();
+
+        dynamic uninstallShortcut = shell.CreateShortcut(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "卸载" + AppName + ".lnk"));
+        uninstallShortcut.TargetPath = uninstallerExe;
+        uninstallShortcut.IconLocation = uninstallerExe + ",0";
+        uninstallShortcut.WorkingDirectory = Path.GetDirectoryName(uninstallerExe);
+        uninstallShortcut.Description = "卸载" + AppName;
+        uninstallShortcut.Save();
     }
 
     private static string InstallDirectory() => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "SchoolNetAutoAuth");
