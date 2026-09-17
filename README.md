@@ -35,3 +35,7 @@ powershell -ExecutionPolicy Bypass -File scripts\publish.ps1
 ## 卸载
 
 可从 Windows“已安装的应用”或开始菜单中的“卸载校园网自动认证”运行专用卸载程序。卸载器默认保留账号凭据、录制配置和 Edge 专用登录状态；只有主动勾选“同时删除用户数据”时才会一并清除。
+
+[^]: 本项目自动化测试基于 Playwright 技术
+[^]: Microsoft Playwright. https://github.com/microsoft/playwright
+
