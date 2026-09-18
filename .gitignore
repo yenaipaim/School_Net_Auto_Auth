@@ -1,4 +1,5 @@
 .dotnet/
+.dotnet10/
 .tools/
 .dotnet-home/
 NuGet/

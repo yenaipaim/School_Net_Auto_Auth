@@ -3,27 +3,24 @@ namespace SchoolNetAutoAuth.App.Tests;
 public sealed class AppAssemblyTests
 {
     [Fact]
-    public void AppType_LoadsFromWpfAssembly()
+    public void AppType_LoadsFromWinUiAssembly()
     {
         Assert.Equal("SchoolNetAutoAuth.App", typeof(App).Namespace);
     }
 
     [Fact]
-    public void MainWindow_CanBeConstructedWithoutMissingResources()
+    public void AppAssembly_DoesNotReferenceWpf()
     {
-        Exception? failure = null;
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                using var window = new Views.MainWindow(background: true);
-            }
-            catch (Exception ex) { failure = ex; }
-        });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
+        var references = typeof(App).Assembly.GetReferencedAssemblies();
 
-        Assert.Null(failure);
+        Assert.DoesNotContain(references, reference => reference.Name == "PresentationFramework");
+    }
+
+    [Fact]
+    public void TrayAssembly_UsesWindowsFormsNotifyIcon()
+    {
+        var references = typeof(SchoolNetAutoAuth.Tray.TrayIconService).Assembly.GetReferencedAssemblies();
+
+        Assert.Contains(references, reference => reference.Name == "System.Windows.Forms");
     }
 }

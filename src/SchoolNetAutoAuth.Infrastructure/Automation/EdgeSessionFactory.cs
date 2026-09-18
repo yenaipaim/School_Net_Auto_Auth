@@ -29,7 +29,7 @@ public sealed class EdgeSession(IPlaywright playwright, IBrowserContext context)
     public IBrowserContext Context { get; } = context;
     public async ValueTask DisposeAsync()
     {
-        await Context.CloseAsync();
-        playwright.Dispose();
+        try { await Context.CloseAsync().ConfigureAwait(false); }
+        finally { playwright.Dispose(); }
     }
 }

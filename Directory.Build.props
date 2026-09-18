@@ -5,5 +5,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <LangVersion>latest</LangVersion>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <PlaywrightPlatform Condition="$([MSBuild]::IsOSPlatform('Windows'))">win-x64</PlaywrightPlatform>
   </PropertyGroup>
 </Project>

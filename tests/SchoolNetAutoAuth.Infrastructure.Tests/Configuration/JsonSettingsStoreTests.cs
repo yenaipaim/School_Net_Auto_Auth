@@ -51,8 +51,36 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(2, settings.SchemaVersion);
+        Assert.Equal(3, settings.SchemaVersion);
+        Assert.True(settings.AutomaticAuthenticationEnabled);
         Assert.Null(settings.RecordedSequence);
+    }
+
+    [Fact]
+    public async Task Load_VersionTwoConfig_EnablesAutomaticAuthentication()
+    {
+        Directory.CreateDirectory(_directory);
+        var json = """
+        {
+          "schemaVersion": 2,
+          "targetSsid": "NSU-SDN",
+          "portalUri": "http://2.2.2.2",
+          "probeUri": "https://www.yuanshen.com",
+          "networkCheckInterval": "00:00:15",
+          "probeTimeout": "00:00:08",
+          "authenticationTimeout": "00:00:45",
+          "retryInterval": "00:00:10",
+          "maximumAttempts": 3,
+          "startWithWindows": true,
+          "recordedSequence": null
+        }
+        """;
+        await File.WriteAllTextAsync(Path.Combine(_directory, "settings.json"), json);
+
+        var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
+
+        Assert.Equal(3, settings.SchemaVersion);
+        Assert.True(settings.AutomaticAuthenticationEnabled);
     }
 
     public void Dispose()
