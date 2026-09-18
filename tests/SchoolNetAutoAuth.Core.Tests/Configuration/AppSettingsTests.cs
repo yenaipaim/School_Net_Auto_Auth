@@ -5,6 +5,11 @@ namespace SchoolNetAutoAuth.Core.Tests.Configuration;
 public sealed class AppSettingsTests
 {
     [Fact]
+    public void CreateDefault_EnablesAutomaticAuthentication()
+    {
+        Assert.True(AppSettings.CreateDefault().AutomaticAuthenticationEnabled);
+    }
+    [Fact]
     public void CreateDefault_UsesApprovedPortalValues()
     {
         var settings = AppSettings.CreateDefault();

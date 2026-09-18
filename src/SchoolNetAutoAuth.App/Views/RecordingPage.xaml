@@ -1,0 +1,47 @@
+<Page
+    x:Class="SchoolNetAutoAuth.App.Views.RecordingPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+    <Grid Padding="32" RowSpacing="20">
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <StackPanel Spacing="6">
+            <TextBlock Text="认证流程" Style="{ThemeResource TitleTextBlockStyle}" />
+            <TextBlock Text="录制并管理网页认证点击步骤" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+        <Grid Grid.Row="1" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Command="{Binding StartCommand}" Style="{StaticResource AppPrimaryButtonStyle}" ToolTipService.ToolTip="开始录制">
+                <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Play" /><TextBlock Text="开始" /></StackPanel>
+            </Button>
+            <Button Grid.Column="1" Command="{Binding StopCommand}" Style="{StaticResource AppStopButtonStyle}" ToolTipService.ToolTip="结束录制">
+                <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Stop" /><TextBlock Text="结束" /></StackPanel>
+            </Button>
+            <Button Grid.Column="2" Command="{Binding DeleteSelectedCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="删除选中步骤">
+                <SymbolIcon Symbol="Delete" />
+            </Button>
+            <Button Grid.Column="3" Command="{Binding ClearCommand}" Style="{StaticResource AppWarningButtonStyle}" ToolTipService.ToolTip="清除录制">
+                <SymbolIcon Symbol="Clear" />
+            </Button>
+            <Button Grid.Column="4" Command="{Binding RecordAgainCommand}" Style="{StaticResource AppSuccessButtonStyle}" ToolTipService.ToolTip="重新录制">
+                <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Refresh" /><TextBlock Text="重新录制" /></StackPanel>
+            </Button>
+            <TextBlock Grid.Column="5" Text="{Binding ProgressText}" VerticalAlignment="Center" HorizontalAlignment="Right"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Grid>
+        <ListView Grid.Row="2" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep, Mode=TwoWay}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="6" ColumnSpacing="12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="48" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding Order}" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="1" Text="{Binding Description}" TextWrapping="Wrap" />
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

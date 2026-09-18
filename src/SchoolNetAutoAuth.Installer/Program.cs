@@ -26,14 +26,15 @@ internal static class Program
     private static void Install()
     {
         var target = InstallDirectory();
+        StopExistingApplication(target);
         Directory.CreateDirectory(target);
         using var payload = Assembly.GetExecutingAssembly().GetManifestResourceStream("SchoolNetAutoAuth.payload.zip") ?? throw new InvalidDataException("安装包内容缺失。");
         using var archive = new ZipArchive(payload, ZipArchiveMode.Read);
         archive.ExtractToDirectory(target, overwriteFiles: true);
 
         var appExe = Path.Combine(target, ExeName);
-        var uninstallerExe = Path.Combine(target, "Uninstall.exe");
-        if (!File.Exists(uninstallerExe)) throw new FileNotFoundException("安装包中缺少卸载程序。", uninstallerExe);
+        if (!File.Exists(appExe)) throw new FileNotFoundException("安装包中缺少主程序。", appExe);
+        var registration = InstallRegistration.Create(appExe);
         using (var run = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run"))
             run.SetValue("CampusNetworkAutoAuth", $"\"{appExe}\" --background");
         using (var uninstall = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\SchoolNetAutoAuth"))
@@ -43,17 +44,38 @@ internal static class Program
             uninstall.SetValue("Publisher", "SchoolNetAutoAuth");
             uninstall.SetValue("InstallLocation", target);
             uninstall.SetValue("DisplayIcon", appExe);
-            uninstall.SetValue("UninstallString", $"\"{uninstallerExe}\"");
-            uninstall.SetValue("QuietUninstallString", $"\"{uninstallerExe}\" --quiet");
+            uninstall.SetValue("UninstallString", registration.UninstallString);
+            uninstall.SetValue("QuietUninstallString", registration.QuietUninstallString);
             uninstall.SetValue("NoModify", 1, RegistryValueKind.DWord);
             uninstall.SetValue("NoRepair", 1, RegistryValueKind.DWord);
         }
-        CreateShortcuts(appExe, uninstallerExe);
-        Process.Start(new ProcessStartInfo(appExe) { UseShellExecute = true });
+        CreateShortcuts(appExe);
+        var application = Process.Start(new ProcessStartInfo(appExe) { UseShellExecute = true })
+            ?? throw new InvalidOperationException("无法启动主程序。");
+        if (application.WaitForExit(3000))
+            throw new InvalidOperationException($"主程序启动失败，退出代码：{application.ExitCode}。");
         Forms.MessageBox.Show("安装完成，程序已启动并驻留系统托盘。", AppName, Forms.MessageBoxButtons.OK, Forms.MessageBoxIcon.Information);
     }
 
-    private static void CreateShortcuts(string appExe, string uninstallerExe)
+    private static void StopExistingApplication(string installDirectory)
+    {
+        foreach (var process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(ExeName)))
+        {
+            try
+            {
+                if (!string.Equals(process.MainModule?.FileName, Path.Combine(installDirectory, ExeName), StringComparison.OrdinalIgnoreCase))
+                    continue;
+                process.Kill(entireProcessTree: true);
+                process.WaitForExit(10_000);
+            }
+            finally
+            {
+                process.Dispose();
+            }
+        }
+    }
+
+    private static void CreateShortcuts(string appExe)
     {
         var shellType = Type.GetTypeFromProgID("WScript.Shell") ?? throw new InvalidOperationException("无法创建开始菜单快捷方式。");
         dynamic shell = Activator.CreateInstance(shellType)!;
@@ -65,9 +87,10 @@ internal static class Program
         shortcut.Save();
 
         dynamic uninstallShortcut = shell.CreateShortcut(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "卸载" + AppName + ".lnk"));
-        uninstallShortcut.TargetPath = uninstallerExe;
-        uninstallShortcut.IconLocation = uninstallerExe + ",0";
-        uninstallShortcut.WorkingDirectory = Path.GetDirectoryName(uninstallerExe);
+        uninstallShortcut.TargetPath = appExe;
+        uninstallShortcut.Arguments = "--uninstall";
+        uninstallShortcut.IconLocation = appExe + ",0";
+        uninstallShortcut.WorkingDirectory = Path.GetDirectoryName(appExe);
         uninstallShortcut.Description = "卸载" + AppName;
         uninstallShortcut.Save();
     }

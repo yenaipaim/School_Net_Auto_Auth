@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/SchoolNetAutoAuth.App/SchoolNetAutoAuth.App.csproj" />
-    <ProjectReference Include="../../src/SchoolNetAutoAuth.Uninstaller/SchoolNetAutoAuth.Uninstaller.csproj" />
+    <ProjectReference Include="../../src/SchoolNetAutoAuth.Installer/SchoolNetAutoAuth.Installer.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />

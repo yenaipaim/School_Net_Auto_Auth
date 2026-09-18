@@ -14,9 +14,11 @@ public sealed class PlaywrightActionRecorder(EdgeSessionFactory sessions, Locato
     private int _pageCounter;
     private volatile bool _sequenceActive;
     private readonly TaskCompletionSource _recordingFailure = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private IProgress<RecorderStep>? _progress;
 
     public async Task<RecordedClickSequence> RecordAsync(RecorderRequest request, IProgress<RecorderStep> progress, CancellationToken cancellationToken)
     {
+        _progress = progress;
         await using var session = await sessions.LaunchAsync(false, cancellationToken);
         var page = session.Context.Pages.FirstOrDefault() ?? await session.Context.NewPageAsync();
         var pageKey = $"page-{Interlocked.Increment(ref _pageCounter)}";
@@ -95,7 +97,11 @@ public sealed class PlaywrightActionRecorder(EdgeSessionFactory sessions, Locato
             {
                 if (await resolver.IsUniqueAsync(page, candidate)) { selected = candidate; break; }
             }
-            if (selected is null) throw new InvalidDataException("所点击元素无法生成唯一定位规则，请使用带有明确文字或标签的控件。");
+            if (selected is null)
+            {
+                _progress?.Report(new("click-skipped", "已跳过无法唯一定位的页面控件；请继续点击可操作按钮。"));
+                return;
+            }
             lock (_sync) _clicks.Add(new RecordedClickStep(_clicks.Count + 1, pageKey, NormalizeUrl(page.Url), selected, Describe(descriptor)));
         }
         catch (Exception ex) { _recordingFailure.TrySetException(ex); throw; }
@@ -126,12 +132,33 @@ public sealed class PlaywrightActionRecorder(EdgeSessionFactory sessions, Locato
           window.__schoolNetCaptureInstalled = true;
           window.__schoolNetCaptureArmed = false;
           window.__schoolNetCaptureMode = 'single';
-          document.addEventListener('click', async event => {
-            if (!window.__schoolNetCaptureArmed) return;
-            const e = event.target.closest('input,button,a,select,textarea,[role]') || event.target;
+        const buildCssPath = element => {
+          if (element.id) return '#' + CSS.escape(element.id);
+          const stable = ['data-testid','data-test','data-action','name','aria-label']
+            .map(name => [name, element.getAttribute(name)])
+            .find(pair => pair[1]);
+          if (stable) return element.tagName.toLowerCase() + '[' + stable[0] + '="' + CSS.escape(stable[1]) + '"]';
+          const parts = [];
+          let current = element;
+          while (current && current.nodeType === 1 && current !== document.body) {
+            let part = current.tagName.toLowerCase();
+            const classes = Array.from(current.classList || []).filter(Boolean).slice(0, 2);
+            if (classes.length) part += classes.map(value => '.' + CSS.escape(value)).join('');
+            const siblings = current.parentElement ? Array.from(current.parentElement.children).filter(x => x.tagName === current.tagName) : [];
+            if (siblings.length > 1) part += ':nth-of-type(' + (siblings.indexOf(current) + 1) + ')';
+            parts.unshift(part);
+            current = current.parentElement;
+          }
+          return parts.join(' > ');
+        };
+        document.addEventListener('click', async event => {
+          if (!window.__schoolNetCaptureArmed) return;
+            const raw = event.target instanceof Element ? event.target : null;
+            const e = raw?.closest('input,button,a,select,textarea,[role="button"],[role="link"],[onclick],[tabindex]:not([tabindex="-1"]),label') || raw;
+            if (!e) return;
             const label = e.labels && e.labels.length ? Array.from(e.labels).map(x => x.innerText).join(' ') : null;
             const role = e.getAttribute('role') || ({BUTTON:'button',A:'link',INPUT:e.type==='checkbox'?'checkbox':'textbox',SELECT:'combobox'})[e.tagName] || null;
-            const cssPath = e.id ? '#' + CSS.escape(e.id) : (e.getAttribute('name') ? `${e.tagName.toLowerCase()}[name="${CSS.escape(e.getAttribute('name'))}"]` : e.tagName.toLowerCase());
+            const cssPath = buildCssPath(e);
             event.preventDefault(); event.stopImmediatePropagation();
             await window.schoolNetCapture({ tagName:e.tagName.toLowerCase(), role, accessibleName:e.getAttribute('aria-label') || (e.tagName==='BUTTON'||e.tagName==='A' ? e.innerText : null), label, placeholder:e.getAttribute('placeholder'), text:(e.tagName==='BUTTON'||e.tagName==='A' ? e.innerText : null), cssPath, pageKey:__PAGE_KEY__, url:location.href });
             if (window.__schoolNetCaptureMode === 'single') { window.__schoolNetCaptureArmed = false; return; }

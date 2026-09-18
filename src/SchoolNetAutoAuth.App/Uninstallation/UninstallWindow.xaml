@@ -1,0 +1,22 @@
+<Window
+    x:Class="SchoolNetAutoAuth.App.Uninstallation.UninstallWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Padding="28" Width="560" Height="330">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="卸载校园网自动认证" FontSize="22" FontWeight="SemiBold" />
+        <TextBlock Grid.Row="1" Margin="0,14,0,0" Text="程序文件、开机启动项和快捷方式将被删除。"
+                   TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        <ScrollViewer Grid.Row="2" Margin="0,18,0,0" VerticalScrollBarVisibility="Auto">
+            <CheckBox x:Name="DeleteUserDataBox"
+                      Content="同时删除凭据、录制配置、日志和 Edge 登录状态" />
+        </ScrollViewer>
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="取消" Click="Cancel_Click" />
+            <Button Content="卸载" Click="Uninstall_Click" Style="{StaticResource AccentButtonStyle}" />
+        </StackPanel>
+    </Grid>
+</Window>

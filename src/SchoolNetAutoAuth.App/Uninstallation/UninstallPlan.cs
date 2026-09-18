@@ -1,4 +1,4 @@
-namespace SchoolNetAutoAuth.Uninstaller;
+namespace SchoolNetAutoAuth.App.Uninstallation;
 
 public sealed record UninstallPlan(
     string InstallDirectory,
@@ -9,6 +9,6 @@ public sealed record UninstallPlan(
     public bool DeleteEdgeProfile => DeleteUserData;
     public bool DeleteSettings => DeleteUserData;
 
-    public static UninstallPlan CreateDefault(string installDirectory, string userDataDirectory)
-        => new(installDirectory, userDataDirectory, DeleteUserData: false);
+    public static UninstallPlan CreateDefault(string installDirectory, string userDataDirectory) =>
+        new(installDirectory, userDataDirectory, DeleteUserData: false);
 }

@@ -8,6 +8,8 @@ public enum AuthenticationState
     Authenticating,
     WaitingForCredentials,
     RetryDelay,
+    ExternalActionCooldown,
+    Paused,
     ActionRequired
 }
 
@@ -17,5 +19,18 @@ public enum AuthenticationOutcome
     Failed,
     CredentialsRequired,
     RecordingRequired,
+    ExternalActionRequired,
     Cancelled
+}
+
+public enum ExternalActionKind
+{
+    PhoneVerification,
+    DeviceLimit
+}
+
+public enum AuthenticationTrigger
+{
+    Background,
+    Manual
 }

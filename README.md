@@ -12,9 +12,15 @@
 4. 回到软件点击“结束录制”；如有误点，可删除选中步骤或清除后重新录制。
 5. 点击“立即认证”进行测试。成功后程序会关闭自动化 Edge，平时驻留系统托盘。
 
+认证期间如果网页要求电话验证或提示在线设备达到上限，程序会先复查联网状态。尚未联网时，右下角通知会显示经过脱敏和截断的网页提示，并保留当前 Edge 页面供处理；程序在 5 分钟后自动重试。点击“立即认证”可以跳过等待并马上重试。连接成功后，桌面右下角会显示成功通知。
+
+主界面使用 WinUI 3 和 NavigationView，分为状态、认证流程、网络设置和高级设置。右上角“关于”可查看作者和项目地址。
+
 ## 隐私
 
 普通配置文件不保存账号或密码。凭据只保存在 Windows 凭据管理器或 Edge 专用配置中；程序默认不生成截图、视频或 Playwright Trace。
+
+运行日志位于 `%LOCALAPPDATA%\SchoolNetAutoAuth\SchoolNetAutoAuth.log`，最大 1 MiB，超限后自动删除最早内容。日志仅记录固定状态和原因码，不记录账号、密码、Cookie、Token 或网页原文。
 
 # 疑问
 
@@ -24,7 +30,7 @@
 
 ## 本地构建
 
-项目使用 `.dotnet\dotnet.exe`（SDK 8.0.425）和根目录 `NuGet.Config`。发布命令：
+项目使用 .NET 10 LTS、Windows App SDK、CommunityToolkit.Mvvm 和根目录 `NuGet.Config`。发布命令：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\publish.ps1
@@ -34,6 +40,6 @@ powershell -ExecutionPolicy Bypass -File scripts\publish.ps1
 
 ## 卸载
 
-可从 Windows“已安装的应用”或开始菜单中的“卸载校园网自动认证”运行专用卸载程序。卸载器默认保留账号凭据、录制配置和 Edge 专用登录状态；只有主动勾选“同时删除用户数据”时才会一并清除。
+可从 Windows“已安装的应用”或开始菜单中的“卸载校园网自动认证”运行主程序内置的卸载入口。卸载默认保留账号凭据、录制配置、日志和 Edge 专用登录状态；只有主动勾选“同时删除用户数据”时才会一并清除。
 
 [^playwright]: 本项目自动化测试基于 Playwright 技术：[Microsoft Playwright](https://github.com/microsoft/playwright)。
