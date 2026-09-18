@@ -1,5 +1,7 @@
 # 校园网自动认证——适配浏览器认证校园网
 
+### School_Net_Auto_Auth——SNAA
+
 面向 Windows 10/11 的校园网托盘工具。连接目标 Wi-Fi 且无法访问指定 HTTPS 地址时，应用使用 Playwright[^playwright] 启动系统 Microsoft Edge 的独立校园网配置，自动填写凭据并按首次录制的点击顺序完成认证。
 
 ## 使用流程
