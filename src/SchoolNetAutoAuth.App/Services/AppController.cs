@@ -16,7 +16,7 @@ public sealed class AppController : IAsyncDisposable
     private readonly AuthenticationCoordinator _coordinator;
     private readonly EdgeSessionFactory _sessions;
     private readonly LocatorResolver _resolver;
-    private readonly RegistryStartupManager _startup;
+    private readonly StartupTaskManager _startup;
     private readonly RollingFileLogger _logger;
     private readonly CancellationTokenSource _lifetime = new();
     private CancellationTokenSource? _recordingCancellation;
@@ -33,7 +33,7 @@ public sealed class AppController : IAsyncDisposable
         AuthenticationCoordinator coordinator,
         EdgeSessionFactory sessions,
         LocatorResolver resolver,
-        RegistryStartupManager startup,
+        StartupTaskManager startup,
         RollingFileLogger logger)
     {
         _settingsStore = settingsStore;
@@ -164,6 +164,13 @@ public sealed class AppController : IAsyncDisposable
     public async Task ClearRecordingAsync()
     {
         Settings = Settings with { RecordedSequence = null };
+        await _settingsStore.SaveAsync(Settings, CancellationToken.None);
+        SettingsChanged?.Invoke(this, Settings);
+    }
+
+    public async Task ImportRecordingAsync(RecordedClickSequence sequence)
+    {
+        Settings = Settings with { RecordedSequence = sequence };
         await _settingsStore.SaveAsync(Settings, CancellationToken.None);
         SettingsChanged?.Invoke(this, Settings);
     }

@@ -28,6 +28,7 @@ public partial class App : Microsoft.UI.Xaml.Application
     private MainWindow? _window;
     private ServiceProvider? _services;
     private bool _exiting;
+    public MainWindow? MainWindow => _window;
 
     public App()
     {
@@ -112,11 +113,14 @@ public partial class App : Microsoft.UI.Xaml.Application
             provider.GetRequiredService<FailedEdgeSessionKeeper>()));
         services.AddSingleton<AuthenticationCoordinator>();
         services.AddSingleton<RegistryStartupManager>();
+        services.AddSingleton<StartupTaskManager>();
         services.AddSingleton(_ => new RollingFileLogger(Path.Combine(root, "SchoolNetAutoAuth.log")));
         services.AddSingleton(_ => new SystemActionService(root));
         services.AddSingleton<AppController>();
         services.AddSingleton<WindowService>();
         services.AddSingleton<DialogService>();
+        services.AddSingleton<FilePickerService>();
+        services.AddSingleton<SchoolNetAutoAuth.Infrastructure.Configuration.RecordingConfigurationSerializer>();
         services.AddSingleton<TrayIconService>();
         services.AddSingleton<DesktopNotificationService>();
         services.AddSingleton<MainViewModel>();

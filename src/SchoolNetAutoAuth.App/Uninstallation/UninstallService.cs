@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
+using SchoolNetAutoAuth.Infrastructure.Startup;
 
 namespace SchoolNetAutoAuth.App.Uninstallation;
 
@@ -14,8 +15,7 @@ public static class UninstallService
     public static void Execute(UninstallPlan plan)
     {
         StopRunningApplication();
-        using (var run = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", writable: true))
-            run?.DeleteValue("CampusNetworkAutoAuth", throwOnMissingValue: false);
+        new StartupTaskManager(new RegistryStartupManager()).Remove();
         Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\SchoolNetAutoAuth", throwOnMissingSubKey: false);
 
         var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);

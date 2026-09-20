@@ -4,7 +4,18 @@ namespace SchoolNetAutoAuth.Infrastructure.Automation;
 
 public sealed class EdgeSessionFactory(string userDataDirectory)
 {
-    public async Task<EdgeSession> LaunchAsync(bool headless, CancellationToken cancellationToken)
+    public Task<EdgeSession> LaunchAsync(EdgeSessionMode mode, CancellationToken cancellationToken)
+    {
+        var headless = mode == EdgeSessionMode.BackgroundAuthentication;
+        return LaunchCoreAsync(headless, cancellationToken);
+    }
+
+    // Kept for source compatibility with integrations compiled against the pre-mode API.
+    [Obsolete("Use LaunchAsync(EdgeSessionMode, CancellationToken).")]
+    public Task<EdgeSession> LaunchAsync(bool headless, CancellationToken cancellationToken) =>
+        LaunchCoreAsync(headless, cancellationToken);
+
+    private async Task<EdgeSession> LaunchCoreAsync(bool headless, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         Directory.CreateDirectory(userDataDirectory);

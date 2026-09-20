@@ -22,7 +22,7 @@ public sealed class PlaywrightAuthenticationRunner(
         {
             await failedSessions.CloseAsync();
             var credential = await credentials.ReadAsync(cancellationToken);
-            session = await sessions.LaunchAsync(false, cancellationToken);
+            session = await sessions.LaunchAsync(EdgeSessionMode.BackgroundAuthentication, cancellationToken);
             var page = session.Context.Pages.FirstOrDefault() ?? await session.Context.NewPageAsync();
             var externalActions = new ExternalActionPageObserver(session.Context, credential);
             var externalActionGuard = new ExternalActionGuard(probe);

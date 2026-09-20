@@ -10,7 +10,7 @@
         <Grid Padding="18,0,12,0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
             <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
             <Button HorizontalAlignment="Right" VerticalAlignment="Center"
-                    Command="{Binding ShowAboutCommand}" ToolTipService.ToolTip="关于">
+                    Command="{Binding ShowAboutCommand}" Style="{StaticResource AppIconButtonStyle}" ToolTipService.ToolTip="关于">
                 <FontIcon Glyph="&#xE897;" />
             </Button>
         </Grid>

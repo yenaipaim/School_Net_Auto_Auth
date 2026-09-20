@@ -13,4 +13,10 @@ public sealed class RegistryStartupManager
         if (enabled) key.SetValue(ValueName, $"\"{executablePath}\" --background");
         else key.DeleteValue(ValueName, throwOnMissingValue: false);
     }
+
+    public void Remove()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(KeyPath, writable: true);
+        key?.DeleteValue(ValueName, throwOnMissingValue: false);
+    }
 }

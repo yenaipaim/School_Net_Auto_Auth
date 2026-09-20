@@ -35,8 +35,7 @@ internal static class Program
         var appExe = Path.Combine(target, ExeName);
         if (!File.Exists(appExe)) throw new FileNotFoundException("安装包中缺少主程序。", appExe);
         var registration = InstallRegistration.Create(appExe);
-        using (var run = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run"))
-            run.SetValue("CampusNetworkAutoAuth", $"\"{appExe}\" --background");
+        RegisterStartup(appExe);
         using (var uninstall = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\SchoolNetAutoAuth"))
         {
             uninstall.SetValue("DisplayName", AppName);
@@ -93,6 +92,41 @@ internal static class Program
         uninstallShortcut.WorkingDirectory = Path.GetDirectoryName(appExe);
         uninstallShortcut.Description = "卸载" + AppName;
         uninstallShortcut.Save();
+    }
+
+    private static void RegisterStartup(string appExe)
+    {
+        try
+        {
+            var startInfo = new ProcessStartInfo("schtasks.exe")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            startInfo.ArgumentList.Add("/Create");
+            startInfo.ArgumentList.Add("/TN");
+            startInfo.ArgumentList.Add("SchoolNetAutoAuth");
+            startInfo.ArgumentList.Add("/SC");
+            startInfo.ArgumentList.Add("ONLOGON");
+            startInfo.ArgumentList.Add("/RL");
+            startInfo.ArgumentList.Add("LIMITED");
+            startInfo.ArgumentList.Add("/F");
+            startInfo.ArgumentList.Add("/TR");
+            startInfo.ArgumentList.Add($"\"{appExe}\" --background");
+            using var process = Process.Start(startInfo);
+            if (process is null) throw new InvalidOperationException("无法启动任务计划程序。");
+            process.WaitForExit();
+            if (process.ExitCode == 0)
+            {
+                using var oldRun = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", writable: true);
+                oldRun?.DeleteValue("CampusNetworkAutoAuth", throwOnMissingValue: false);
+                return;
+            }
+        }
+        catch { }
+
+        using var run = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+        run.SetValue("CampusNetworkAutoAuth", $"\"{appExe}\" --background");
     }
 
     private static string InstallDirectory() => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "SchoolNetAutoAuth");

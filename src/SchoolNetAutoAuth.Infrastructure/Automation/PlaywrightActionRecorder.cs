@@ -19,7 +19,7 @@ public sealed class PlaywrightActionRecorder(EdgeSessionFactory sessions, Locato
     public async Task<RecordedClickSequence> RecordAsync(RecorderRequest request, IProgress<RecorderStep> progress, CancellationToken cancellationToken)
     {
         _progress = progress;
-        await using var session = await sessions.LaunchAsync(false, cancellationToken);
+        await using var session = await sessions.LaunchAsync(EdgeSessionMode.Recording, cancellationToken);
         var page = session.Context.Pages.FirstOrDefault() ?? await session.Context.NewPageAsync();
         var pageKey = $"page-{Interlocked.Increment(ref _pageCounter)}";
         await AttachPageAsync(page, pageKey);
