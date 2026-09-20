@@ -12,10 +12,8 @@ public sealed class DesktopNotificationService : IDisposable
         {
             AuthenticationNoticeKind.Connected =>
                 ("校园网连接成功", notice.Message, TimeSpan.FromSeconds(8)),
-            _ when notice.ExternalAction == ExternalActionKind.PhoneVerification =>
-                ("需要电话验证", BuildBlockedMessage(notice.Message), TimeSpan.FromSeconds(30)),
             _ =>
-                ("在线设备达到上限", BuildBlockedMessage(notice.Message), TimeSpan.FromSeconds(30))
+                ("认证需要手动处理", BuildBlockedMessage(notice.Message), TimeSpan.FromSeconds(30))
         };
         _current?.Close();
         _current = new(title, message, duration);
@@ -24,7 +22,7 @@ public sealed class DesktopNotificationService : IDisposable
     }
 
     private static string BuildBlockedMessage(string safeExcerpt) =>
-        $"{safeExcerpt}\n\n将在 5 分钟后自动重试。也可以点击主窗口的“立即认证”马上重试。";
+        $"{safeExcerpt}\n\n已关闭后台浏览器并打开认证地址，请手动完成修复。";
 
     public void Dispose()
     {

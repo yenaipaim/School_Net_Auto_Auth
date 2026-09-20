@@ -81,12 +81,12 @@ public sealed class PlaywrightAuthenticationRunner(
                 if (result is not null) return await PreserveExternalActionAsync(result);
                 await Task.Delay(1000, cancellationToken);
             }
-            if (attempt.KeepBrowserOpenOnFailure)
-            {
-                await failedSessions.ReplaceAsync(session);
-                session = null;
-            }
-            return new(AuthenticationOutcome.Failed, "connectivity_not_restored");
+            var recoveryUrl = session.Context.Pages.FirstOrDefault()?.Url;
+            await session.DisposeAsync();
+            session = null;
+            return new(AuthenticationOutcome.Failed, "connectivity_not_restored",
+                UserMessage: "认证后仍无法联网。",
+                RecoveryUri: Uri.TryCreate(recoveryUrl, UriKind.Absolute, out var recovery) ? recovery : settings.PortalUri);
 
             async Task<AuthenticationResult> PreserveExternalActionAsync(AuthenticationResult result)
             {
@@ -101,15 +101,17 @@ public sealed class PlaywrightAuthenticationRunner(
         {
             if ((await probe.CheckAsync(settings.ProbeUri, settings.ProbeTimeout, cancellationToken)).IsOnline)
                 return AuthenticationResult.Success();
-            if (session is not null && attempt.KeepBrowserOpenOnFailure) { await failedSessions.ReplaceAsync(session); session = null; }
-            return new(AuthenticationOutcome.RecordingRequired, "portal_element_failed");
+            var url = session?.Context.Pages.FirstOrDefault()?.Url;
+            if (session is not null) { await session.DisposeAsync(); session = null; }
+            return new(AuthenticationOutcome.RecordingRequired, "portal_element_failed", UserMessage: $"认证页面操作失败：{ex.Message}", RecoveryUri: Uri.TryCreate(url, UriKind.Absolute, out var recovery) ? recovery : settings.PortalUri);
         }
         catch
         {
             if ((await probe.CheckAsync(settings.ProbeUri, settings.ProbeTimeout, cancellationToken)).IsOnline)
                 return AuthenticationResult.Success();
-            if (session is not null && attempt.KeepBrowserOpenOnFailure) { await failedSessions.ReplaceAsync(session); session = null; }
-            return new(AuthenticationOutcome.Failed, "browser_failed");
+            var url = session?.Context.Pages.FirstOrDefault()?.Url;
+            if (session is not null) { await session.DisposeAsync(); session = null; }
+            return new(AuthenticationOutcome.Failed, "browser_failed", UserMessage: $"浏览器认证失败：{ex.Message}", RecoveryUri: Uri.TryCreate(url, UriKind.Absolute, out var recovery) ? recovery : settings.PortalUri);
         }
         finally { if (session is not null) await session.DisposeAsync(); }
     }

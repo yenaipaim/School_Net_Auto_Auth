@@ -43,7 +43,18 @@ public sealed class RollingFileLogger(string path, TimeProvider? timeProvider = 
         if (entry.Outcome is not null) builder.Append(" outcome=").Append(entry.Outcome);
         if (entry.ExternalAction is not null) builder.Append(" externalAction=").Append(entry.ExternalAction);
         if (entry.Attempt is not null) builder.Append(" attempt=").Append(entry.Attempt.Value);
+        if (entry.Url is not null) builder.Append(" url=").Append(Sanitize(entry.Url.ToString()));
+        if (!string.IsNullOrWhiteSpace(entry.Message)) builder.Append(" message=").Append(Sanitize(entry.Message));
+        if (!string.IsNullOrWhiteSpace(entry.TechnicalDetail)) builder.Append(" detail=").Append(Sanitize(entry.TechnicalDetail));
         return builder.AppendLine().ToString();
+    }
+
+    private static string Sanitize(string value)
+    {
+        var clean = value.Replace("\r", " ").Replace("\n", " ");
+        if (Uri.TryCreate(clean, UriKind.Absolute, out var uri))
+            return new UriBuilder(uri) { Query = string.Empty, Fragment = string.Empty }.Uri.ToString();
+        return clean.Length > 500 ? clean[..500] : clean;
     }
 
     private void TrimAndAppend(byte[] lineBytes)

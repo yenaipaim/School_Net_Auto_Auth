@@ -75,6 +75,23 @@ public sealed class AuthenticationCoordinator
                         return;
                     case AuthenticationOutcome.RecordingRequired:
                         SetState(AuthenticationState.ActionRequired);
+                        NoticeRaised?.Invoke(this, new(
+                            AuthenticationNoticeKind.ExternalActionRequired,
+                            result.UserMessage ?? "认证流程需要手动处理。",
+                            null,
+                            null,
+                            result.RecoveryUri,
+                            result.UserMessage));
+                        return;
+                    case AuthenticationOutcome.Failed:
+                        SetState(AuthenticationState.ActionRequired);
+                        NoticeRaised?.Invoke(this, new(
+                            AuthenticationNoticeKind.ExternalActionRequired,
+                            result.UserMessage ?? "认证失败，请手动处理。",
+                            null,
+                            null,
+                            result.RecoveryUri,
+                            result.UserMessage));
                         return;
                     case AuthenticationOutcome.ExternalActionRequired:
                         if ((await _probe.CheckAsync(settings.ProbeUri, settings.ProbeTimeout, cancellationToken)).IsOnline)
@@ -89,7 +106,9 @@ public sealed class AuthenticationCoordinator
                             AuthenticationNoticeKind.ExternalActionRequired,
                             result.UserMessage ?? result.ReasonCode,
                             result.ExternalAction,
-                            RetryNotBeforeUtc));
+                            RetryNotBeforeUtc,
+                            result.RecoveryUri,
+                            result.UserMessage));
                         return;
                     case AuthenticationOutcome.Cancelled:
                         SetState(AuthenticationState.WaitingForTargetWifi);

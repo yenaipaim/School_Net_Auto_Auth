@@ -4,6 +4,7 @@ using SchoolNetAutoAuth.Core.Contracts;
 using SchoolNetAutoAuth.Infrastructure.Automation;
 using SchoolNetAutoAuth.Infrastructure.Logging;
 using SchoolNetAutoAuth.Infrastructure.Startup;
+using System.Diagnostics;
 
 namespace SchoolNetAutoAuth.App.Services;
 
@@ -227,8 +228,16 @@ public sealed class AppController : IAsyncDisposable
             notice.Kind == AuthenticationNoticeKind.Connected
                 ? AuthenticationOutcome.Succeeded
                 : AuthenticationOutcome.ExternalActionRequired,
-            notice.ExternalAction));
+            notice.ExternalAction,
+            Message: notice.Message,
+            Url: notice.RecoveryUri,
+            TechnicalDetail: notice.TechnicalDetail));
         PublishSnapshot(_snapshot with { LastAuthenticationResult = notice.Message });
+        if (notice.Kind == AuthenticationNoticeKind.ExternalActionRequired && notice.RecoveryUri is not null)
+        {
+            try { Process.Start(new ProcessStartInfo(notice.RecoveryUri.ToString()) { UseShellExecute = true }); }
+            catch (Exception ex) { _logger.Write(new(AppLogEvent.UnexpectedError, Message: "打开认证地址失败", TechnicalDetail: ex.Message)); }
+        }
         NoticeRaised?.Invoke(this, notice);
     }
 

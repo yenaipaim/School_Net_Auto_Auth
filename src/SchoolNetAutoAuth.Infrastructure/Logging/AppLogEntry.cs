@@ -22,4 +22,7 @@ public sealed record AppLogEntry(
     AuthenticationState? State = null,
     AuthenticationOutcome? Outcome = null,
     ExternalActionKind? ExternalAction = null,
-    int? Attempt = null);
+    int? Attempt = null,
+    string? Message = null,
+    Uri? Url = null,
+    string? TechnicalDetail = null);
