@@ -15,25 +15,25 @@
                 <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Button Command="{Binding StartCommand}" Style="{StaticResource AppPrimaryButtonStyle}" ToolTipService.ToolTip="开始录制">
-                <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Play" /><TextBlock Text="开始" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/play.svg" Width="16" Height="16" /><TextBlock Text="开始" /></StackPanel>
             </Button>
             <Button Grid.Column="1" Command="{Binding StopCommand}" Style="{StaticResource AppStopButtonStyle}" ToolTipService.ToolTip="结束录制">
-                <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Stop" /><TextBlock Text="结束" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/square.svg" Width="16" Height="16" /><TextBlock Text="结束" /></StackPanel>
             </Button>
             <Button Grid.Column="2" Command="{Binding DeleteSelectedCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="删除选中步骤">
-                <SymbolIcon Symbol="Delete" />
+                <Image Source="ms-appx:///Assets/Icons/trash.svg" Width="16" Height="16" />
             </Button>
             <Button Grid.Column="3" Command="{Binding ClearCommand}" Style="{StaticResource AppWarningButtonStyle}" ToolTipService.ToolTip="清除录制">
-                <SymbolIcon Symbol="Clear" />
+                <Image Source="ms-appx:///Assets/Icons/eraser.svg" Width="16" Height="16" />
             </Button>
             <Button Grid.Column="4" Command="{Binding RecordAgainCommand}" Style="{StaticResource AppSuccessButtonStyle}" ToolTipService.ToolTip="重新录制">
-                <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Refresh" /><TextBlock Text="重新录制" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/refresh.svg" Width="16" Height="16" /><TextBlock Text="重新录制" /></StackPanel>
             </Button>
             <Button Grid.Column="5" Command="{Binding ImportCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导入配置">
-                <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="OpenFile" /><TextBlock Text="导入" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/import.svg" Width="16" Height="16" /><TextBlock Text="导入" /></StackPanel>
             </Button>
             <Button Grid.Column="6" Command="{Binding ExportCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导出配置">
-                <StackPanel Orientation="Horizontal" Spacing="6"><SymbolIcon Symbol="Save" /><TextBlock Text="导出" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/export.svg" Width="16" Height="16" /><TextBlock Text="导出" /></StackPanel>
             </Button>
             <TextBlock Grid.Column="7" Text="{Binding ProgressText}" VerticalAlignment="Center" HorizontalAlignment="Right"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />

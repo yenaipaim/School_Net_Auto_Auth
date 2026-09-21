@@ -97,7 +97,7 @@ public sealed class PlaywrightAuthenticationRunner(
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new(AuthenticationOutcome.Cancelled, "cancelled"); }
-        catch (PlaywrightException)
+        catch (PlaywrightException ex)
         {
             if ((await probe.CheckAsync(settings.ProbeUri, settings.ProbeTimeout, cancellationToken)).IsOnline)
                 return AuthenticationResult.Success();
@@ -105,7 +105,7 @@ public sealed class PlaywrightAuthenticationRunner(
             if (session is not null) { await session.DisposeAsync(); session = null; }
             return new(AuthenticationOutcome.RecordingRequired, "portal_element_failed", UserMessage: $"认证页面操作失败：{ex.Message}", RecoveryUri: Uri.TryCreate(url, UriKind.Absolute, out var recovery) ? recovery : settings.PortalUri);
         }
-        catch
+        catch (Exception ex)
         {
             if ((await probe.CheckAsync(settings.ProbeUri, settings.ProbeTimeout, cancellationToken)).IsOnline)
                 return AuthenticationResult.Success();

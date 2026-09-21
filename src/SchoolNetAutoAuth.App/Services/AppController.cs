@@ -10,6 +10,7 @@ namespace SchoolNetAutoAuth.App.Services;
 
 public sealed class AppController : IAsyncDisposable
 {
+    private static readonly TimeSpan OnlineMonitoringInterval = TimeSpan.FromMinutes(30);
     private readonly ISettingsStore _settingsStore;
     private readonly ICredentialStore _credentials;
     private readonly INetworkMonitor _network;
@@ -185,7 +186,10 @@ public sealed class AppController : IAsyncDisposable
                 await RefreshNetworkSnapshotAsync(cancellationToken);
                 if (Settings.AutomaticAuthenticationEnabled)
                     await _coordinator.EvaluateAsync(Settings, AuthenticationTrigger.Background, cancellationToken);
-                await Task.Delay(Settings.NetworkCheckInterval, cancellationToken);
+                var nextCheck = _snapshot.IsConnected
+                    ? OnlineMonitoringInterval
+                    : Settings.NetworkCheckInterval;
+                await Task.Delay(nextCheck, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

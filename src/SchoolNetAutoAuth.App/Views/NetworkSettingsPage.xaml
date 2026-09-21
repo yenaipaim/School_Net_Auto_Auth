@@ -13,7 +13,7 @@
             <TextBox Header="目标 Wi-Fi" Text="{Binding TargetSsid, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox Header="认证地址" Text="{Binding PortalUri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox Header="联网检测地址" Text="{Binding ProbeUri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <NumberBox Header="网络检测间隔（秒）" Value="{Binding NetworkCheckIntervalSeconds, Mode=TwoWay}"
+            <NumberBox Header="未联网检测间隔（秒）" Value="{Binding NetworkCheckIntervalSeconds, Mode=TwoWay}"
                        Minimum="3" Maximum="3600" SpinButtonPlacementMode="Inline" />
             <ToggleSwitch Header="自动认证" IsOn="{Binding AutomaticAuthenticationEnabled, Mode=TwoWay}" />
             <Button Command="{Binding SaveCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Padding="18,9">

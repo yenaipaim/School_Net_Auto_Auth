@@ -11,7 +11,7 @@
             <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
             <Button HorizontalAlignment="Right" VerticalAlignment="Center"
                     Command="{Binding ShowAboutCommand}" Style="{StaticResource AppIconButtonStyle}" ToolTipService.ToolTip="关于">
-                <FontIcon Glyph="&#xE897;" />
+                <Image Source="ms-appx:///Assets/Icons/info.svg" Width="16" Height="16" />
             </Button>
         </Grid>
         <NavigationView x:Name="Navigation" Grid.Row="1" PaneDisplayMode="Left"

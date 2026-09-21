@@ -16,26 +16,26 @@ internal static class Program
     {
         Forms.Application.EnableVisualStyles();
         Forms.Application.SetCompatibleTextRenderingDefault(false);
-        try
-        {
-            Install();
-        }
-        catch (Exception ex) { Forms.MessageBox.Show($"操作失败：{ex.Message}", AppName, Forms.MessageBoxButtons.OK, Forms.MessageBoxIcon.Error); }
+        Application.Run(new InstallProgressForm());
     }
 
-    private static void Install()
+    internal static void Install(Action<InstallProgress> report)
     {
+        report(new(5, "正在准备安装目录..."));
         var target = InstallDirectory();
         StopExistingApplication(target);
         Directory.CreateDirectory(target);
+        report(new(15, "正在解压程序文件..."));
         using var payload = Assembly.GetExecutingAssembly().GetManifestResourceStream("SchoolNetAutoAuth.payload.zip") ?? throw new InvalidDataException("安装包内容缺失。");
         using var archive = new ZipArchive(payload, ZipArchiveMode.Read);
-        archive.ExtractToDirectory(target, overwriteFiles: true);
+        ExtractArchive(archive, target, report);
 
         var appExe = Path.Combine(target, ExeName);
         if (!File.Exists(appExe)) throw new FileNotFoundException("安装包中缺少主程序。", appExe);
         var registration = InstallRegistration.Create(appExe);
+        report(new(78, "正在注册开机启动..."));
         RegisterStartup(appExe);
+        report(new(86, "正在写入卸载信息..."));
         using (var uninstall = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\SchoolNetAutoAuth"))
         {
             uninstall.SetValue("DisplayName", AppName);
@@ -48,12 +48,28 @@ internal static class Program
             uninstall.SetValue("NoModify", 1, RegistryValueKind.DWord);
             uninstall.SetValue("NoRepair", 1, RegistryValueKind.DWord);
         }
+        report(new(92, "正在创建开始菜单快捷方式..."));
         CreateShortcuts(appExe);
+        report(new(96, "正在启动主程序..."));
         var application = Process.Start(new ProcessStartInfo(appExe) { UseShellExecute = true })
             ?? throw new InvalidOperationException("无法启动主程序。");
         if (application.WaitForExit(3000))
             throw new InvalidOperationException($"主程序启动失败，退出代码：{application.ExitCode}。");
-        Forms.MessageBox.Show("安装完成，程序已启动并驻留系统托盘。", AppName, Forms.MessageBoxButtons.OK, Forms.MessageBoxIcon.Information);
+    }
+
+    private static void ExtractArchive(ZipArchive archive, string target, Action<InstallProgress> report)
+    {
+        var entries = archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)).ToArray();
+        for (var index = 0; index < entries.Length; index++)
+        {
+            var entry = entries[index];
+            var destination = Path.GetFullPath(Path.Combine(target, entry.FullName));
+            if (!destination.StartsWith(Path.GetFullPath(target).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("安装包包含非法路径。");
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            entry.ExtractToFile(destination, overwrite: true);
+            report(new(15 + (int)((index + 1) * 60.0 / entries.Length), $"正在解压程序文件（{index + 1}/{entries.Length}）..."));
+        }
     }
 
     private static void StopExistingApplication(string installDirectory)

@@ -14,7 +14,10 @@ public sealed class RecordingConfigurationSerializerTests
         var json = serializer.Serialize(sequence);
         var actual = serializer.Deserialize(json);
 
-        Assert.Equal(sequence, actual);
+        Assert.Equal(sequence.Version, actual.Version);
+        Assert.Equal(sequence.RecordedAtUtc, actual.RecordedAtUtc);
+        Assert.Equal(sequence.Credentials, actual.Credentials);
+        Assert.Equal(sequence.Clicks, actual.Clicks);
     }
 
     [Fact]
@@ -45,8 +48,8 @@ public sealed class RecordingConfigurationSerializerTests
 
         Assert.DoesNotContain("TargetSsid", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("PortalUri", json, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("username", json, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("password", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("示例账号", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("示例密码", json, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

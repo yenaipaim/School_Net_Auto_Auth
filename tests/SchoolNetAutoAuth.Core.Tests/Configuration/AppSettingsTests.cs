@@ -9,6 +9,12 @@ public sealed class AppSettingsTests
     {
         Assert.True(AppSettings.CreateDefault().AutomaticAuthenticationEnabled);
     }
+
+    [Fact]
+    public void CreateDefault_ChecksNetworkEveryFifteenSecondsWhenOffline()
+    {
+        Assert.Equal(TimeSpan.FromSeconds(15), AppSettings.CreateDefault().NetworkCheckInterval);
+    }
     [Fact]
     public void CreateDefault_UsesApprovedPortalValues()
     {

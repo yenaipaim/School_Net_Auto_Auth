@@ -10,7 +10,7 @@ public sealed class ExternalActionPageObserverTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _session = await new EdgeSessionFactory(_profile).LaunchAsync(true, CancellationToken.None);
+        _session = await new EdgeSessionFactory(_profile).LaunchAsync(EdgeSessionMode.BackgroundAuthentication, CancellationToken.None);
     }
 
     [Fact]

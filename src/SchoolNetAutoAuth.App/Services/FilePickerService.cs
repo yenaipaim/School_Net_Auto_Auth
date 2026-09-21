@@ -5,7 +5,7 @@ using WinRT.Interop;
 
 namespace SchoolNetAutoAuth.App.Services;
 
-public sealed class FilePickerService(WindowService windows)
+public sealed class FilePickerService
 {
     public async Task<StorageFile?> PickOpenFileAsync()
     {

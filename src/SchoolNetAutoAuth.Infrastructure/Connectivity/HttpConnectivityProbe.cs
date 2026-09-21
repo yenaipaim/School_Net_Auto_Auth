@@ -24,9 +24,11 @@ public sealed class HttpConnectivityProbe : IConnectivityProbe, IDisposable
             using var request = new HttpRequestMessage(HttpMethod.Get, probeUri);
             request.Headers.UserAgent.ParseAdd("SchoolNetAutoAuth/1.0");
             using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeoutSource.Token);
-            return response.StatusCode == HttpStatusCode.NetworkAuthenticationRequired
-                ? new(false, "network_authentication_required")
-                : new(true, $"http_{(int)response.StatusCode}");
+            if (response.StatusCode == HttpStatusCode.NetworkAuthenticationRequired)
+                return new(false, "network_authentication_required");
+            return ((int)response.StatusCode is >= 200 and < 300)
+                ? new(true, $"http_{(int)response.StatusCode}")
+                : new(false, $"http_{(int)response.StatusCode}");
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { return new(false, "timeout"); }
         catch (HttpRequestException) { return new(false, "request_failed"); }
