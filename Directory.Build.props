@@ -4,6 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <LangVersion>latest</LangVersion>
+    <Version>1.1.0</Version>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <PlaywrightPlatform Condition="$([MSBuild]::IsOSPlatform('Windows'))">win-x64</PlaywrightPlatform>
   </PropertyGroup>

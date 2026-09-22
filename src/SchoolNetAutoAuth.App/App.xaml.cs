@@ -102,15 +102,13 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<INetworkMonitor>(provider => provider.GetRequiredService<WindowsWifiMonitor>());
         services.AddSingleton<HttpConnectivityProbe>();
         services.AddSingleton<IConnectivityProbe>(provider => provider.GetRequiredService<HttpConnectivityProbe>());
-        services.AddSingleton<FailedEdgeSessionKeeper>();
         services.AddSingleton(_ => new EdgeSessionFactory(Path.Combine(root, "EdgeProfile")));
         services.AddSingleton<LocatorResolver>();
         services.AddSingleton<IAuthenticationRunner>(provider => new PlaywrightAuthenticationRunner(
             provider.GetRequiredService<EdgeSessionFactory>(),
             provider.GetRequiredService<LocatorResolver>(),
             provider.GetRequiredService<ICredentialStore>(),
-            provider.GetRequiredService<IConnectivityProbe>(),
-            provider.GetRequiredService<FailedEdgeSessionKeeper>()));
+            provider.GetRequiredService<IConnectivityProbe>()));
         services.AddSingleton<AuthenticationCoordinator>();
         services.AddSingleton<RegistryStartupManager>();
         services.AddSingleton<StartupTaskManager>();

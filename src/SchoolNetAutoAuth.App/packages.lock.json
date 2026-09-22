@@ -110,7 +110,7 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Playwright": "[1.55.0, )",
-          "SchoolNetAutoAuth.Core": "[1.0.0, )"
+          "SchoolNetAutoAuth.Core": "[1.1.0, )"
         }
       },
       "schoolnetautoauth.tray": {

@@ -67,9 +67,14 @@ if ($LASTEXITCODE -ne 0) { throw 'Installer publish failed.' }
 $setupPath = Join-Path $installerOutput $setupName
 Copy-Item -LiteralPath (Join-Path $installerOutput 'SchoolNetAutoAuth.Setup.exe') -Destination $setupPath -Force
 if (-not (Test-Path $setupPath)) { throw 'Final setup executable is missing.' }
+$setupHash = Get-FileHash -LiteralPath $setupPath -Algorithm SHA256
+$checksumPath = "$setupPath.sha256"
+$checksumLine = "$($setupHash.Hash.ToLowerInvariant())  $([IO.Path]::GetFileName($setupPath))"
+[IO.File]::WriteAllText($checksumPath, $checksumLine, [Text.UTF8Encoding]::new($false))
 
 Write-Host "Application: $publishOutput"
 Write-Host "Installer: $setupPath"
+Write-Host "Checksum: $checksumPath"
 $allFiles = Get-ChildItem -LiteralPath $publishOutput -Recurse -File
 $playwrightBytes = ($allFiles | Where-Object FullName -Like '*\.playwright\*' | Measure-Object Length -Sum).Sum
 $windowsAppSdkBytes = ($allFiles | Where-Object { $_.Name -like 'Microsoft.WindowsAppRuntime*' -or $_.FullName -like '*\Microsoft.WindowsAppRuntime*' } | Measure-Object Length -Sum).Sum

@@ -9,8 +9,7 @@ public sealed class PlaywrightAuthenticationRunner(
     EdgeSessionFactory sessions,
     LocatorResolver resolver,
     ICredentialStore credentials,
-    IConnectivityProbe probe,
-    FailedEdgeSessionKeeper failedSessions) : IAuthenticationRunner
+    IConnectivityProbe probe) : IAuthenticationRunner
 {
     public async Task<AuthenticationResult> AuthenticateAsync(AppSettings settings, AuthenticationAttempt attempt, CancellationToken cancellationToken)
     {
@@ -20,7 +19,6 @@ public sealed class PlaywrightAuthenticationRunner(
         EdgeSession? session = null;
         try
         {
-            await failedSessions.CloseAsync();
             var credential = await credentials.ReadAsync(cancellationToken);
             session = await sessions.LaunchAsync(EdgeSessionMode.BackgroundAuthentication, cancellationToken);
             var page = session.Context.Pages.FirstOrDefault() ?? await session.Context.NewPageAsync();
@@ -52,14 +50,14 @@ public sealed class PlaywrightAuthenticationRunner(
                 if (targetPage is null)
                 {
                     var blocked = await externalActionGuard.CheckAsync(externalActions, settings.ProbeUri, settings.ProbeTimeout, cancellationToken);
-                    if (blocked is not null) return await PreserveExternalActionAsync(blocked);
+                    if (blocked is not null) return await CloseAndReturnExternalActionAsync(blocked);
                     return new(AuthenticationOutcome.RecordingRequired, "recorded_page_unavailable");
                 }
                 var locator = resolver.Resolve(targetPage, step.Locator);
                 if (await locator.CountAsync() != 1)
                 {
                     var blocked = await externalActionGuard.CheckAsync(externalActions, settings.ProbeUri, settings.ProbeTimeout, cancellationToken);
-                    if (blocked is not null) return await PreserveExternalActionAsync(blocked);
+                    if (blocked is not null) return await CloseAndReturnExternalActionAsync(blocked);
                     return new(AuthenticationOutcome.RecordingRequired, "recorded_element_unavailable");
                 }
                 await locator.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = timeout }).WaitAsync(cancellationToken);
@@ -71,14 +69,14 @@ public sealed class PlaywrightAuthenticationRunner(
                     settings.ProbeTimeout,
                     cancellationToken,
                     probeWithoutDetection: false);
-                if (result is not null) return await PreserveExternalActionAsync(result);
+                if (result is not null) return await CloseAndReturnExternalActionAsync(result);
             }
 
             var deadline = DateTime.UtcNow + settings.AuthenticationTimeout;
             while (DateTime.UtcNow < deadline)
             {
                 var result = await externalActionGuard.CheckAsync(externalActions, settings.ProbeUri, settings.ProbeTimeout, cancellationToken);
-                if (result is not null) return await PreserveExternalActionAsync(result);
+                if (result is not null) return await CloseAndReturnExternalActionAsync(result);
                 await Task.Delay(1000, cancellationToken);
             }
             var recoveryUrl = session.Context.Pages.FirstOrDefault()?.Url;
@@ -86,14 +84,19 @@ public sealed class PlaywrightAuthenticationRunner(
             session = null;
             return new(AuthenticationOutcome.Failed, "connectivity_not_restored",
                 UserMessage: "认证后仍无法联网。",
-                RecoveryUri: Uri.TryCreate(recoveryUrl, UriKind.Absolute, out var recovery) ? recovery : settings.PortalUri);
+                RecoveryUri: ResolveRecoveryUri(recoveryUrl) ?? settings.PortalUri);
 
-            async Task<AuthenticationResult> PreserveExternalActionAsync(AuthenticationResult result)
+            async Task<AuthenticationResult> CloseAndReturnExternalActionAsync(AuthenticationResult result)
             {
                 if (result.Outcome != AuthenticationOutcome.ExternalActionRequired) return result;
-                await failedSessions.ReplaceAsync(session);
-                session = null;
-                return result;
+                if (session is null) return result;
+
+                var recoveryUri = result.RecoveryUri
+                    ?? ResolveRecoveryUri(session.Context.Pages.FirstOrDefault()?.Url)
+                    ?? settings.PortalUri;
+                try { await session.DisposeAsync(); }
+                finally { session = null; }
+                return result with { RecoveryUri = recoveryUri };
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new(AuthenticationOutcome.Cancelled, "cancelled"); }
@@ -103,7 +106,7 @@ public sealed class PlaywrightAuthenticationRunner(
                 return AuthenticationResult.Success();
             var url = session?.Context.Pages.FirstOrDefault()?.Url;
             if (session is not null) { await session.DisposeAsync(); session = null; }
-            return new(AuthenticationOutcome.RecordingRequired, "portal_element_failed", UserMessage: $"认证页面操作失败：{ex.Message}", RecoveryUri: Uri.TryCreate(url, UriKind.Absolute, out var recovery) ? recovery : settings.PortalUri);
+            return new(AuthenticationOutcome.RecordingRequired, "portal_element_failed", UserMessage: $"认证页面操作失败：{ex.Message}", RecoveryUri: ResolveRecoveryUri(url) ?? settings.PortalUri);
         }
         catch (Exception ex)
         {
@@ -111,7 +114,7 @@ public sealed class PlaywrightAuthenticationRunner(
                 return AuthenticationResult.Success();
             var url = session?.Context.Pages.FirstOrDefault()?.Url;
             if (session is not null) { await session.DisposeAsync(); session = null; }
-            return new(AuthenticationOutcome.Failed, "browser_failed", UserMessage: $"浏览器认证失败：{ex.Message}", RecoveryUri: Uri.TryCreate(url, UriKind.Absolute, out var recovery) ? recovery : settings.PortalUri);
+            return new(AuthenticationOutcome.Failed, "browser_failed", UserMessage: $"浏览器认证失败：{ex.Message}", RecoveryUri: ResolveRecoveryUri(url) ?? settings.PortalUri);
         }
         finally { if (session is not null) await session.DisposeAsync(); }
     }
@@ -139,4 +142,11 @@ public sealed class PlaywrightAuthenticationRunner(
         }
         return null;
     }
+
+    private static Uri? ResolveRecoveryUri(string? value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri)
+        && (string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            ? uri
+            : null;
 }
