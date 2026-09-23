@@ -64,8 +64,12 @@ public partial class App : Microsoft.UI.Xaml.Application
         }
 
         _services = BuildServices();
+        await _services.GetRequiredService<CourseScheduleService>().InitializeAsync();
         var windows = _services.GetRequiredService<WindowService>();
-        _window = new MainWindow(_services.GetRequiredService<MainViewModel>(), windows);
+        _window = new MainWindow(
+            _services.GetRequiredService<MainViewModel>(),
+            windows,
+            _services.GetRequiredService<AppController>());
         _showWindowSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\SchoolNetAutoAuth.ShowWindow");
         _ = WaitForShowWindowAsync(windows, _activationLifetime.Token);
 
@@ -96,6 +100,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SchoolNetAutoAuth");
         var services = new ServiceCollection();
         services.AddSingleton<ISettingsStore>(_ => new JsonSettingsStore(root));
+        services.AddSingleton<ICourseScheduleStore>(_ => new JsonCourseScheduleStore(root));
         services.AddSingleton<WindowsCredentialStore>();
         services.AddSingleton<ICredentialStore>(provider => provider.GetRequiredService<WindowsCredentialStore>());
         services.AddSingleton<WindowsWifiMonitor>();
@@ -114,6 +119,10 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<StartupTaskManager>();
         services.AddSingleton(_ => new RollingFileLogger(Path.Combine(root, "SchoolNetAutoAuth.log")));
         services.AddSingleton(_ => new SystemActionService(root));
+        services.AddSingleton<CourseScheduleSerializer>();
+        services.AddSingleton<WordCourseScheduleImporter>();
+        services.AddSingleton<CourseScheduleService>();
+        services.AddSingleton<UpdateService>();
         services.AddSingleton<AppController>();
         services.AddSingleton<WindowService>();
         services.AddSingleton<DialogService>();
@@ -126,6 +135,8 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<RecordingViewModel>();
         services.AddSingleton<NetworkSettingsViewModel>();
         services.AddSingleton<AdvancedSettingsViewModel>();
+        services.AddSingleton<ScheduleViewModel>();
+        services.AddSingleton<GeneralSettingsViewModel>();
         return services.BuildServiceProvider();
     }
 

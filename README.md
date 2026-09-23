@@ -16,13 +16,17 @@
 
 认证期间如果网页要求电话验证或提示在线设备达到上限，程序会先复查联网状态。尚未联网时，右下角通知会显示经过脱敏和截断的网页提示，并保留当前 Edge 页面供处理；程序在 5 分钟后自动重试。点击“立即认证”可以跳过等待并马上重试。连接成功后，桌面右下角会显示成功通知。
 
-主界面使用 WinUI 3 和 NavigationView，分为状态、认证流程、网络设置和高级设置。
+课程表页支持手动维护课程、设置学期开始日期、按周查看课程，并可导入 DOCX、JSON、CSV、ICS，导出 JSON、CSV、ICS。Word 仅支持 `.docx`，旧版 `.doc` 文件需先用 Word 另存为 `.docx`。课程表默认保存在本地，不上传云端。
+
+主界面使用 WinUI 3 和 NavigationView，分为网络认证、课程表和通用设置。网络认证包含状态、认证流程、网络设置和高级设置；通用设置提供版本检查、作者链接、背景图像和交流群信息。
 
 ## 隐私
 
 普通配置文件不保存账号或密码。凭据只保存在 Windows 凭据管理器或 Edge 专用配置中；程序默认不生成截图、视频或 Playwright Trace。
 
 运行日志位于 `%LOCALAPPDATA%\SchoolNetAutoAuth\SchoolNetAutoAuth.log`，最大 1 MiB，超限后自动删除最早内容。日志仅记录固定状态和原因码，不记录账号、密码、Cookie、Token 或网页原文。
+
+课程表保存在 `%LOCALAPPDATA%\SchoolNetAutoAuth\schedules\current.json`。导入和导出仅在用户主动选择文件时执行。
 
 # 疑问
 

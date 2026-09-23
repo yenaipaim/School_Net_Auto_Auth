@@ -7,7 +7,11 @@ public sealed class AppSettingsTests
     [Fact]
     public void CreateDefault_EnablesAutomaticAuthentication()
     {
-        Assert.True(AppSettings.CreateDefault().AutomaticAuthenticationEnabled);
+        var settings = AppSettings.CreateDefault();
+        Assert.True(settings.AutomaticAuthenticationEnabled);
+        Assert.Null(settings.BackgroundImagePath);
+        Assert.Equal(0.45, settings.BackgroundImageOpacity);
+        Assert.Equal(5, settings.SchemaVersion);
     }
 
     [Fact]
@@ -38,5 +42,12 @@ public sealed class AppSettingsTests
         var settings = AppSettings.CreateDefault() with { ProbeUri = new Uri("relative", UriKind.Relative) };
         var result = settings.Validate();
         Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_RejectsBackgroundOpacityOutsideRange()
+    {
+        var settings = AppSettings.CreateDefault() with { BackgroundImageOpacity = 1.2 };
+        Assert.False(settings.Validate().IsValid);
     }
 }

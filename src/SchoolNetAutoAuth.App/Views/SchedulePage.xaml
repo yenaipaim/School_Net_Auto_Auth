@@ -1,0 +1,267 @@
+<Page
+    x:Class="SchoolNetAutoAuth.App.Views.SchedulePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+    <Grid Padding="20" RowSpacing="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="6">
+                <TextBlock Text="课程表" Style="{ThemeResource TitleTextBlockStyle}" />
+                <TextBlock Text="管理课程、查看本周安排" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" Header="显示周末" IsOn="{Binding ShowWeekends, Mode=TwoWay}"
+                          VerticalAlignment="Top" />
+        </Grid>
+
+        <Grid Grid.Row="1" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Command="{Binding ImportCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导入课程表（DOCX、JSON、CSV、ICS）">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="ms-appx:///Assets/Icons/import.svg" Width="16" Height="16" />
+                    <TextBlock Text="导入" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="1" Command="{Binding ExportJsonCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导出 JSON">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="ms-appx:///Assets/Icons/export.svg" Width="16" Height="16" />
+                    <TextBlock Text="JSON" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="2" Command="{Binding ExportCsvCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导出 CSV">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="ms-appx:///Assets/Icons/export.svg" Width="16" Height="16" />
+                    <TextBlock Text="CSV" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="3" Command="{Binding ExportIcsCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导出 ICS 日历">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="ms-appx:///Assets/Icons/export.svg" Width="16" Height="16" />
+                    <TextBlock Text="ICS" />
+                </StackPanel>
+            </Button>
+            <Button Grid.Column="4" Command="{Binding SelectTodayCommand}" Style="{StaticResource AppButtonStyle}"
+                    HorizontalAlignment="Right" ToolTipService.ToolTip="定位到今天">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="ms-appx:///Assets/Icons/refresh.svg" Width="16" Height="16" />
+                    <TextBlock Text="今天" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="2" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6" Padding="14">
+                <ScrollViewer VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="课程编辑" Style="{ThemeResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Command="{Binding NewCourseCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="新增课程">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <SymbolIcon Symbol="Add" />
+                                    <TextBlock Text="新增" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <ListView ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse, Mode=TwoWay}" Height="126">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Location}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <TextBox Header="课程名称" Text="{Binding CourseName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Header="教师" Text="{Binding Teacher, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Grid.Column="1" Header="地点" Text="{Binding Location, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </Grid>
+                        <ComboBox Header="星期" SelectedIndex="{Binding WeekdayIndex, Mode=TwoWay}">
+                            <ComboBoxItem Content="周一" />
+                            <ComboBoxItem Content="周二" />
+                            <ComboBoxItem Content="周三" />
+                            <ComboBoxItem Content="周四" />
+                            <ComboBoxItem Content="周五" />
+                            <ComboBoxItem Content="周六" />
+                            <ComboBoxItem Content="周日" />
+                        </ComboBox>
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TimePicker Header="开始" ClockIdentifier="24HourClock" Time="{Binding StartTime, Mode=TwoWay}" />
+                            <TimePicker Grid.Column="1" Header="结束" ClockIdentifier="24HourClock" Time="{Binding EndTime, Mode=TwoWay}" />
+                        </Grid>
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <NumberBox Header="起始周" Minimum="1" Maximum="52" SpinButtonPlacementMode="Inline" Value="{Binding FirstWeek, Mode=TwoWay}" />
+                            <NumberBox Grid.Column="1" Header="结束周" Minimum="1" Maximum="52" SpinButtonPlacementMode="Inline" Value="{Binding LastWeek, Mode=TwoWay}" />
+                        </Grid>
+                        <ComboBox Header="单双周" SelectedIndex="{Binding ParityIndex, Mode=TwoWay}">
+                            <ComboBoxItem Content="每周" />
+                            <ComboBoxItem Content="单周" />
+                            <ComboBoxItem Content="双周" />
+                        </ComboBox>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button Command="{Binding SaveCourseCommand}" Style="{StaticResource AppPrimaryButtonStyle}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <SymbolIcon Symbol="Save" />
+                                    <TextBlock Text="保存课程" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="1" Command="{Binding DeleteCourseCommand}" Style="{StaticResource AppStopButtonStyle}" ToolTipService.ToolTip="删除选中课程">
+                                <Image Source="ms-appx:///Assets/Icons/trash.svg" Width="16" Height="16" />
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <Grid Grid.Column="1" RowSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox Header="学期开始" Width="162" MaxDropDownHeight="240"
+                              ScrollViewer.VerticalScrollMode="Enabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ItemsSource="{Binding SemesterStartOptions}"
+                              SelectedValuePath="Date" SelectedValue="{Binding SemesterStartDate, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Text}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <CalendarDatePicker Grid.Column="1" Header="查看日期" Date="{Binding SelectedDate, Mode=TwoWay}" />
+                    <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Bottom">
+                        <TextBlock Text="下一节课" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding NextCourseText}" TextWrapping="Wrap" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Grid.Row="1" Spacing="8">
+                    <TextBlock Text="{Binding SelectedDayText}" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    <ListView ItemsSource="{Binding SelectedDayCourses}" MaxHeight="96">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding TimeText}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Location}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
+
+                <Border Grid.Row="2" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="6" Padding="8">
+                    <Grid RowSpacing="6">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="48" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="时间" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <ItemsControl Grid.Column="1" ItemsSource="{Binding WeekDays}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Width="96" Padding="6" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                BorderThickness="0,0,1,1">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="{Binding DayName}" FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding DateText}" FontSize="12"
+                                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Auto">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Canvas x:Name="TimeAxisCanvas" Width="48" />
+                                <Canvas x:Name="ScheduleCanvas" Grid.Column="1" />
+                            </Grid>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <TextBlock Grid.Row="3" Text="{Binding StatusText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+    </Grid>
+</Page>

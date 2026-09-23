@@ -7,21 +7,30 @@ namespace SchoolNetAutoAuth.App.Services;
 
 public sealed class FilePickerService
 {
-    public async Task<StorageFile?> PickOpenFileAsync()
+    public async Task<StorageFile?> PickOpenFileAsync(
+        string description = "配置文件",
+        params string[] extensions)
     {
         var picker = new FileOpenPicker();
-        picker.FileTypeFilter.Add(".json");
+        foreach (var extension in NormalizeExtensions(extensions))
+            picker.FileTypeFilter.Add(extension);
         Initialize(picker);
         return await picker.PickSingleFileAsync();
     }
 
-    public async Task<StorageFile?> PickSaveFileAsync(string suggestedName)
+    public async Task<StorageFile?> PickSaveFileAsync(
+        string suggestedName,
+        string description = "配置文件",
+        params string[] extensions)
     {
         var picker = new FileSavePicker { SuggestedFileName = suggestedName, SuggestedStartLocation = PickerLocationId.DocumentsLibrary };
-        picker.FileTypeChoices.Add("录制配置", new[] { ".json" });
+        picker.FileTypeChoices.Add(description, NormalizeExtensions(extensions).ToArray());
         Initialize(picker);
         return await picker.PickSaveFileAsync();
     }
+
+    private static IEnumerable<string> NormalizeExtensions(IReadOnlyCollection<string> extensions) =>
+        extensions.Count == 0 ? [".json"] : extensions;
 
     private void Initialize(object picker)
     {

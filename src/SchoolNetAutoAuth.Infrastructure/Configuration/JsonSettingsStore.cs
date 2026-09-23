@@ -23,21 +23,27 @@ public sealed class JsonSettingsStore : ISettingsStore
             await using var stream = File.OpenRead(_settingsPath);
             var settings = await JsonSerializer.DeserializeAsync<AppSettings>(stream, JsonOptions, cancellationToken);
             if (settings is null || !settings.Validate().IsValid) throw new InvalidDataException("Invalid settings");
-            return settings.SchemaVersion switch
+            var migrated = settings.SchemaVersion switch
             {
                 < 2 => settings with
                 {
-                    SchemaVersion = 3,
                     AutomaticAuthenticationEnabled = true,
+                    BackgroundImagePath = null,
                     RecordedSequence = null
                 },
                 2 => settings with
                 {
-                    SchemaVersion = 3,
                     AutomaticAuthenticationEnabled = true
+                },
+                3 => settings with
+                {
+                    BackgroundImagePath = null
                 },
                 _ => settings
             };
+            if (migrated.SchemaVersion < 5)
+                migrated = migrated with { SchemaVersion = 5, BackgroundImageOpacity = 0.45 };
+            return migrated;
         }
         catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException)
         {

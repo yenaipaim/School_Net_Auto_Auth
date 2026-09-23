@@ -28,7 +28,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public async Task Load_VersionOneProviderConfig_MigratesToEmptyVersionTwoSequence()
+    public async Task Load_VersionOneProviderConfig_MigratesToCurrentSchema()
     {
         Directory.CreateDirectory(_directory);
         var json = """
@@ -51,8 +51,10 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(3, settings.SchemaVersion);
+        Assert.Equal(5, settings.SchemaVersion);
         Assert.True(settings.AutomaticAuthenticationEnabled);
+        Assert.Null(settings.BackgroundImagePath);
+        Assert.Equal(0.45, settings.BackgroundImageOpacity);
         Assert.Null(settings.RecordedSequence);
     }
 
@@ -79,8 +81,68 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(3, settings.SchemaVersion);
+        Assert.Equal(5, settings.SchemaVersion);
         Assert.True(settings.AutomaticAuthenticationEnabled);
+        Assert.Equal(0.45, settings.BackgroundImageOpacity);
+    }
+
+    [Fact]
+    public async Task Load_VersionThreeConfig_AddsEmptyBackgroundImage()
+    {
+        Directory.CreateDirectory(_directory);
+        var json = """
+        {
+          "schemaVersion": 3,
+          "targetSsid": "NSU-SDN",
+          "portalUri": "http://2.2.2.2",
+          "probeUri": "https://www.yuanshen.com",
+          "networkCheckInterval": "00:00:15",
+          "probeTimeout": "00:00:08",
+          "authenticationTimeout": "00:00:45",
+          "retryInterval": "00:00:10",
+          "maximumAttempts": 3,
+          "startWithWindows": true,
+          "automaticAuthenticationEnabled": true,
+          "recordedSequence": null
+        }
+        """;
+        await File.WriteAllTextAsync(Path.Combine(_directory, "settings.json"), json);
+
+        var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
+
+        Assert.Equal(5, settings.SchemaVersion);
+        Assert.Null(settings.BackgroundImagePath);
+        Assert.Equal(0.45, settings.BackgroundImageOpacity);
+    }
+
+    [Fact]
+    public async Task Load_VersionFourConfig_AddsBackgroundOpacity()
+    {
+        Directory.CreateDirectory(_directory);
+        var json = """
+        {
+          "schemaVersion": 4,
+          "targetSsid": "NSU-SDN",
+          "portalUri": "http://2.2.2.2",
+          "probeUri": "https://www.yuanshen.com",
+          "networkCheckInterval": "00:00:15",
+          "probeTimeout": "00:00:08",
+          "authenticationTimeout": "00:00:45",
+          "retryInterval": "00:00:10",
+          "maximumAttempts": 3,
+          "startWithWindows": true,
+          "automaticAuthenticationEnabled": true,
+          "backgroundImagePath": "C:\\test\\background.png",
+          "recordedSequence": null
+        }
+        """;
+        await File.WriteAllTextAsync(Path.Combine(_directory, "settings.json"), json);
+
+        var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
+
+        Assert.Equal(5, settings.SchemaVersion);
+        Assert.Equal("C:\\test\\background.png", settings.BackgroundImagePath);
+        Assert.Equal(0.45, settings.BackgroundImageOpacity);
     }
 
     public void Dispose()

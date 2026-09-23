@@ -223,9 +223,9 @@
           "Microsoft.Extensions.DependencyInjection": "[10.0.12, )",
           "Microsoft.WindowsAppSDK.Runtime": "[2.5.1, )",
           "Microsoft.WindowsAppSDK.WinUI": "[2.3.9, )",
-          "SchoolNetAutoAuth.Core": "[1.1.0, )",
-          "SchoolNetAutoAuth.Infrastructure": "[1.1.0, )",
-          "SchoolNetAutoAuth.Tray": "[1.1.0, )"
+          "SchoolNetAutoAuth.Core": "[1.3.3, )",
+          "SchoolNetAutoAuth.Infrastructure": "[1.3.3, )",
+          "SchoolNetAutoAuth.Tray": "[1.3.3, )"
         }
       },
       "schoolnetautoauth.core": {
@@ -235,7 +235,7 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Playwright": "[1.55.0, )",
-          "SchoolNetAutoAuth.Core": "[1.1.0, )"
+          "SchoolNetAutoAuth.Core": "[1.3.3, )"
         }
       },
       "SchoolNetAutoAuth.Setup": {

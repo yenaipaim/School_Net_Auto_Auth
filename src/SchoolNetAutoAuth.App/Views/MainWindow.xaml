@@ -2,37 +2,49 @@
     x:Class="SchoolNetAutoAuth.App.Views.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid x:Name="Root">
+    <Grid x:Name="Root" Background="#F7F9FB">
         <Grid.RowDefinitions>
             <RowDefinition Height="52" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid Padding="18,0,12,0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+        <Image x:Name="BackgroundImage" Grid.RowSpan="2" Stretch="UniformToFill"
+               Opacity="0.45" IsHitTestVisible="False" />
+        <Grid Padding="18,0,12,0" Background="#EAF7F9FB">
             <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
-            <Button HorizontalAlignment="Right" VerticalAlignment="Center"
-                    Command="{Binding ShowAboutCommand}" Style="{StaticResource AppIconButtonStyle}" ToolTipService.ToolTip="关于">
-                <Image Source="ms-appx:///Assets/Icons/info.svg" Width="16" Height="16" />
-            </Button>
         </Grid>
         <NavigationView x:Name="Navigation" Grid.Row="1" PaneDisplayMode="Left"
                         IsBackButtonVisible="Collapsed" IsSettingsVisible="False"
                         SelectionChanged="Navigation_SelectionChanged"
                         Background="{StaticResource AppNavigationPaneBackgroundBrush}">
+            <NavigationView.Resources>
+                <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
+            </NavigationView.Resources>
             <NavigationView.MenuItems>
-                <NavigationViewItem Content="状态" Tag="status">
-                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE80F;" /></NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="认证流程" Tag="recording">
-                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE768;" /></NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="网络设置" Tag="network">
+                <NavigationViewItem Content="网络认证" Tag="network-root" SelectsOnInvoked="False" IsExpanded="True">
                     <NavigationViewItem.Icon><FontIcon Glyph="&#xE774;" /></NavigationViewItem.Icon>
+                    <NavigationViewItem.MenuItems>
+                        <NavigationViewItem x:Name="StatusNavigationItem" Content="状态" Tag="status">
+                            <NavigationViewItem.Icon><FontIcon Glyph="&#xE80F;" /></NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem Content="认证流程" Tag="recording">
+                            <NavigationViewItem.Icon><FontIcon Glyph="&#xE768;" /></NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem Content="网络设置" Tag="network">
+                            <NavigationViewItem.Icon><FontIcon Glyph="&#xE774;" /></NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem Content="高级设置" Tag="advanced">
+                            <NavigationViewItem.Icon><FontIcon Glyph="&#xE713;" /></NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                    </NavigationViewItem.MenuItems>
                 </NavigationViewItem>
-                <NavigationViewItem Content="高级设置" Tag="advanced">
+                <NavigationViewItem Content="课程表" Tag="schedule">
+                    <NavigationViewItem.Icon><FontIcon Glyph="&#xE787;" /></NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="通用设置" Tag="general">
                     <NavigationViewItem.Icon><FontIcon Glyph="&#xE713;" /></NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
-            <Frame x:Name="ContentFrame" />
+            <Frame x:Name="ContentFrame" Background="Transparent" />
         </NavigationView>
     </Grid>
 </Window>

@@ -12,11 +12,13 @@ public sealed record AppSettings(
     int MaximumAttempts,
     bool StartWithWindows,
     bool AutomaticAuthenticationEnabled,
+    string? BackgroundImagePath,
+    double BackgroundImageOpacity,
     RecordedClickSequence? RecordedSequence)
 {
     public static AppSettings CreateDefault() => new(
-        3, "NSU-SDN", new Uri("http://2.2.2.2"), new Uri("https://www.yuanshen.com"),
-        TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(8), TimeSpan.FromSeconds(45), TimeSpan.FromSeconds(10), 3, true, true, null);
+        5, "NSU-SDN", new Uri("http://2.2.2.2"), new Uri("https://www.yuanshen.com"),
+        TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(8), TimeSpan.FromSeconds(45), TimeSpan.FromSeconds(10), 3, true, true, null, 0.45, null);
 
     public ValidationResult Validate()
     {
@@ -26,6 +28,7 @@ public sealed record AppSettings(
         if (ProbeUri is null || !ProbeUri.IsAbsoluteUri || ProbeUri.Scheme != Uri.UriSchemeHttps) errors.Add("联网检测地址必须使用 HTTPS。");
         if (RetryInterval <= TimeSpan.Zero) errors.Add("重试间隔必须大于零。");
         if (MaximumAttempts < 1) errors.Add("最大重试次数至少为 1。");
+        if (BackgroundImageOpacity is < 0 or > 1) errors.Add("背景图像透明度必须在 0 到 1 之间。");
         return new ValidationResult(errors);
     }
 }

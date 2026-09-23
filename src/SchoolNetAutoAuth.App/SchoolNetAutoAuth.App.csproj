@@ -29,6 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\img\图标.ico" Link="App.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="..\..\img\QQ.png" Link="Assets\QQ.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="Assets\Icons\*.svg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
   </ItemGroup>
   <Target Name="CopyWinUiGeneratedResources" AfterTargets="Publish">

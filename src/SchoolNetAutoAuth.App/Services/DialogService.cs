@@ -18,26 +18,6 @@ public sealed class DialogService(WindowService windows)
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 
-    public async Task ShowAboutAsync()
-    {
-        var panel = new StackPanel { Spacing = 10 };
-        panel.Children.Add(new TextBlock { Text = $"作者：{Views.AboutInfo.Author}" });
-        panel.Children.Add(new HyperlinkButton
-        {
-            Content = Views.AboutInfo.RepositoryUri.ToString(),
-            NavigateUri = Views.AboutInfo.RepositoryUri,
-            Padding = new Thickness(0)
-        });
-        var dialog = new ContentDialog
-        {
-            Title = "关于",
-            Content = panel,
-            CloseButtonText = "关闭",
-            XamlRoot = windows.XamlRoot
-        };
-        await dialog.ShowAsync();
-    }
-
     private async Task ShowAsync(string title, string message, string closeText)
     {
         var dialog = CreateDialog(title, message);

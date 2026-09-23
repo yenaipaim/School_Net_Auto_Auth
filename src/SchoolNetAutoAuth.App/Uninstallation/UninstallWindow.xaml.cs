@@ -13,7 +13,10 @@ public sealed partial class UninstallWindow : Window
         InitializeComponent();
         var appWindow = AppWindow;
         appWindow.Title = "卸载校园网自动认证";
-        appWindow.Resize(new SizeInt32(560, 330));
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "App.ico");
+        if (File.Exists(iconPath))
+            appWindow.SetIcon(iconPath);
+        appWindow.Resize(new SizeInt32(600, 420));
         appWindow.Closing += (_, _) => _completion.TrySetResult(null);
     }
 
