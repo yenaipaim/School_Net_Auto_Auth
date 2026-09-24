@@ -32,6 +32,9 @@ public sealed class WordCourseScheduleImporterTests
         Assert.Equal(new TimeOnly(9, 50), first.EndTime);
         Assert.Equal(4, first.LastWeek);
         Assert.Equal(WeekParity.All, first.Parity);
+        Assert.Equal(2, schedule.GetTimelinePeriods().Count);
+        Assert.Equal(new TimeOnly(8, 20), schedule.GetTimelinePeriods()[0].StartTime);
+        Assert.Equal(new TimeOnly(9, 50), schedule.GetTimelinePeriods()[1].EndTime);
 
         var later = Assert.Single(schedule.Courses, course =>
             course.Name == "大语言模型技术与应用" && course.FirstWeek == 6);
@@ -64,6 +67,237 @@ public sealed class WordCourseScheduleImporterTests
             _importer.Import(document, new DateOnly(2026, 9, 7)));
 
         Assert.Contains("没有课程表", exception.Message);
+    }
+
+    [Fact]
+    public void Import_UsesExplicitCoursePeriodRangeWithoutVerticalMerge()
+    {
+        var rows = new[]
+        {
+            Row(Cell("节次/星期"), Cell("星期一"), Cell("星期二"), Cell("星期三"), Cell("星期四"), Cell("星期五")),
+            Row(
+                Cell("第1节(08:20-09:00)"),
+                Cell("数据结构[3200610002] 4.0学分\n1-16周[讲授] 樊龙 A7301 第1节-第3节"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty)),
+            Row(
+                Cell("第2节(09:10-09:50)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty)),
+            Row(
+                Cell("第3节(10:00-10:40)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty))
+        };
+        using var document = CreateDocx(new XElement(WordNamespace + "document",
+            new XElement(WordNamespace + "body",
+                new XElement(WordNamespace + "tbl", rows))));
+
+        var schedule = _importer.Import(document, new DateOnly(2026, 9, 7));
+
+        var course = Assert.Single(schedule.Courses);
+        Assert.Equal("数据结构", course.Name);
+        Assert.Equal(new TimeOnly(8, 20), course.StartTime);
+        Assert.Equal(new TimeOnly(10, 40), course.EndTime);
+        Assert.Equal("A7301", course.Location);
+    }
+
+    [Fact]
+    public void Import_InfersMorningFourCreditBlockWhenWordLosesMergedRows()
+    {
+        var rows = new[]
+        {
+            Row(Cell("节次/星期"), Cell("星期一"), Cell("星期二"), Cell("星期三"), Cell("星期四"), Cell("星期五")),
+            Row(
+                Cell("第1节(08:20-09:00)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty)),
+            Row(
+                Cell("第2节(09:10-09:50)"),
+                Cell("大语言模型技术与应用[3200610640] 4.0学分\n1-4周[讲授] 谢心 A3208"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty)),
+            Row(
+                Cell("第3节(10:00-10:40)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty)),
+            Row(
+                Cell("第4节(10:50-11:30)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty)),
+            Row(
+                Cell("第5节(11:40-12:20)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty))
+        };
+        using var document = CreateDocx(new XElement(WordNamespace + "document",
+            new XElement(WordNamespace + "body",
+                new XElement(WordNamespace + "tbl", rows))));
+
+        var schedule = _importer.Import(document, new DateOnly(2026, 9, 7));
+
+        var course = Assert.Single(schedule.Courses);
+        Assert.Equal(new TimeOnly(9, 10), course.StartTime);
+        Assert.Equal(new TimeOnly(12, 20), course.EndTime);
+    }
+
+    [Fact]
+    public void Import_InfersWholeAfternoonBlockForSingleWeeklyFourCreditCourse()
+    {
+        var rows = new[]
+        {
+            Row(Cell("节次/星期"), Cell("星期一"), Cell("星期二"), Cell("星期三"), Cell("星期四"), Cell("星期五")),
+            Row(
+                Cell("第6节(14:00-14:40)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell("计算机网络[2200610240] 4.0学分\n1-16周[讲授] 刘茹文 F3216"),
+                Cell(string.Empty),
+                Cell(string.Empty)),
+            Row(
+                Cell("第7节(14:50-15:30)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty)),
+            Row(
+                Cell("第8节(15:40-16:20)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty)),
+            Row(
+                Cell("第9节(16:30-17:10)"),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty),
+                Cell(string.Empty))
+        };
+        using var document = CreateDocx(new XElement(WordNamespace + "document",
+            new XElement(WordNamespace + "body",
+                new XElement(WordNamespace + "tbl", rows))));
+
+        var schedule = _importer.Import(document, new DateOnly(2026, 9, 7));
+
+        var course = Assert.Single(schedule.Courses);
+        Assert.Equal(new TimeOnly(14, 0), course.StartTime);
+        Assert.Equal(new TimeOnly(17, 10), course.EndTime);
+    }
+
+    [Fact]
+    public void ImportExcel_ReadsLegacyXlsAndExplicitPeriodRange()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Configuration",
+            "Fixtures",
+            "schedule-smoke.xls");
+        using var document = File.OpenRead(path);
+
+        var schedule = _importer.ImportExcel(document, new DateOnly(2026, 9, 15));
+
+        var course = Assert.Single(schedule.Courses);
+        Assert.Equal("数据结构", course.Name);
+        Assert.Equal(DayOfWeek.Monday, course.Weekday);
+        Assert.Equal(new TimeOnly(8, 20), course.StartTime);
+        Assert.Equal(new TimeOnly(10, 40), course.EndTime);
+        Assert.Equal(1, course.FirstWeek);
+        Assert.Equal(16, course.LastWeek);
+        Assert.NotEmpty(schedule.GetTimelinePeriods());
+    }
+
+    [Fact]
+    public void ImportExcel_ReadsGb2312HtmlTableDisguisedAsXls()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        const string html = """
+            <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+            <html>
+            <head><meta http-equiv="Content-Type" content="text/html; charset=GBK" /></head>
+            <body>
+            <table id="mytable">
+              <tr>
+                <td colspan="2"></td>
+                <td>星期一</td>
+                <td>星期二</td>
+              </tr>
+              <tr>
+                <td rowspan="2">上午</td>
+                <td>一</td>
+                <td>
+                  <div class="div1">
+                    <div style="padding-bottom:5px;clear:both;">
+                      <font style="font-weight: bolder">大学英语（3）</font><br>
+                      廖勇<br>1-16[1-2]<br>C208
+                    </div>
+                  </div>
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>二</td>
+                <td></td>
+                <td>
+                  <div class="div1">
+                    <div style="padding-bottom:5px;clear:both;">
+                      <font style="font-weight: bolder">烹饪职业教育学</font><br>
+                      刘浩林<br>9-16[3-4]<br>B311
+                    </div>
+                    <div style="padding-bottom:5px;clear:both;">
+                      <font style="font-weight: bolder">烹饪职业教育学</font><br>
+                      丁晓<br>1-8[3-4]<br>B311
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+            </body>
+            </html>
+            """;
+        using var document = new MemoryStream(Encoding.GetEncoding("GBK").GetBytes(html));
+
+        var schedule = _importer.ImportExcel(document, new DateOnly(2026, 9, 7));
+
+        Assert.Equal(3, schedule.Courses.Count);
+        var english = Assert.Single(schedule.Courses, course => course.Name == "大学英语（3）");
+        Assert.Equal("廖勇", english.Teacher);
+        Assert.Equal("C208", english.Location);
+        Assert.Equal(DayOfWeek.Monday, english.Weekday);
+        Assert.Equal(new TimeOnly(8, 20), english.StartTime);
+        Assert.Equal(new TimeOnly(9, 50), english.EndTime);
+
+        var firstTeacher = Assert.Single(schedule.Courses, course =>
+            course.Name == "烹饪职业教育学" && course.Teacher == "刘浩林");
+        Assert.Equal(DayOfWeek.Tuesday, firstTeacher.Weekday);
+        Assert.Equal(new TimeOnly(10, 0), firstTeacher.StartTime);
+        Assert.Equal(new TimeOnly(11, 30), firstTeacher.EndTime);
+        Assert.Equal(9, firstTeacher.FirstWeek);
+        Assert.Equal(16, firstTeacher.LastWeek);
     }
 
     private static MemoryStream CreateDocument()

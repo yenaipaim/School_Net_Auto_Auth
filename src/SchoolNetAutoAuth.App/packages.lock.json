@@ -38,6 +38,11 @@
           "Microsoft.WindowsAppSDK.InteractiveExperiences": "2.1.8"
         }
       },
+      "ExcelDataReader": {
+        "type": "Transitive",
+        "resolved": "3.7.0",
+        "contentHash": "AMv3oDETRHSRyXC17rBtKH45qIfFyo433LMeaMB3u4RNr/c9Luuc0Z+JMP6+3Cx9n4wXqFqcrEIVxrf/GgYnZg=="
+      },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
         "resolved": "6.0.0",
@@ -109,8 +114,9 @@
       "schoolnetautoauth.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "ExcelDataReader": "[3.7.0, )",
           "Microsoft.Playwright": "[1.55.0, )",
-          "SchoolNetAutoAuth.Core": "[1.3.3, )"
+          "SchoolNetAutoAuth.Core": "[1.3.6, )"
         }
       },
       "schoolnetautoauth.tray": {

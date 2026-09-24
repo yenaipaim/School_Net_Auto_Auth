@@ -6,6 +6,7 @@
     <ProjectReference Include="../SchoolNetAutoAuth.Core/SchoolNetAutoAuth.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="ExcelDataReader" Version="3.7.0" />
     <PackageReference Include="Microsoft.Playwright" Version="1.55.0" />
   </ItemGroup>
 </Project>

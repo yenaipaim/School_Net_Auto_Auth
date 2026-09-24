@@ -66,4 +66,76 @@ public sealed class CourseScheduleTests
         Assert.Contains(result.Errors, error => error.Contains("结束时间", StringComparison.Ordinal));
         Assert.Contains(result.Errors, error => error.Contains("周次范围", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void GetTimelinePeriods_UsesExplicitPeriodsBeforeCourseFallback()
+    {
+        var course = new CourseEntry(
+            Guid.NewGuid(),
+            "课程",
+            string.Empty,
+            string.Empty,
+            DayOfWeek.Monday,
+            new TimeOnly(8, 5),
+            new TimeOnly(9, 45),
+            1,
+            16,
+            WeekParity.All);
+        var periods = new[]
+        {
+            new SchedulePeriodEntry(1, new TimeOnly(8, 5), new TimeOnly(8, 50)),
+            new SchedulePeriodEntry(2, new TimeOnly(9, 0), new TimeOnly(9, 45))
+        };
+        var schedule = new CourseSchedule(
+            CourseSchedule.CurrentSchemaVersion,
+            new DateOnly(2026, 9, 7),
+            [course],
+            periods);
+
+        var result = schedule.GetTimelinePeriods();
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(new TimeOnly(8, 5), result[0].StartTime);
+        Assert.Equal(new TimeOnly(9, 45), result[1].EndTime);
+    }
+
+    [Fact]
+    public void GetTimelinePeriods_FallsBackToDistinctCourseTimes()
+    {
+        var courses = new[]
+        {
+            new CourseEntry(
+                Guid.NewGuid(),
+                "课程一",
+                string.Empty,
+                string.Empty,
+                DayOfWeek.Monday,
+                new TimeOnly(10, 0),
+                new TimeOnly(10, 45),
+                1,
+                16,
+                WeekParity.All),
+            new CourseEntry(
+                Guid.NewGuid(),
+                "课程二",
+                string.Empty,
+                string.Empty,
+                DayOfWeek.Tuesday,
+                new TimeOnly(8, 5),
+                new TimeOnly(8, 50),
+                1,
+                16,
+                WeekParity.All)
+        };
+        var schedule = new CourseSchedule(
+            CourseSchedule.CurrentSchemaVersion,
+            new DateOnly(2026, 9, 7),
+            courses);
+
+        var result = schedule.GetTimelinePeriods();
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(new TimeOnly(8, 5), result[0].StartTime);
+        Assert.Equal(new TimeOnly(10, 45), result[1].EndTime);
+    }
 }

@@ -17,8 +17,10 @@ public partial class ScheduleViewModel : ViewModelBase
     private readonly WordCourseScheduleImporter _wordImporter;
     private Guid? _editingCourseId;
     private bool _initialized;
+    private bool _semesterStartRolloverChecked;
 
     [ObservableProperty] public partial DateTimeOffset SemesterStartDate { get; set; }
+    [ObservableProperty] public partial SemesterStartOptionViewModel? SelectedSemesterStartOption { get; set; }
     [ObservableProperty] public partial DateTimeOffset SelectedDate { get; set; }
     [ObservableProperty] public partial CourseEntry? SelectedCourse { get; set; }
     [ObservableProperty] public partial string CourseName { get; set; } = string.Empty;
@@ -55,7 +57,7 @@ public partial class ScheduleViewModel : ViewModelBase
     public ObservableCollection<CourseEntry> Courses { get; } = [];
     public ObservableCollection<ScheduleDayViewModel> WeekDays { get; } = [];
     public ObservableCollection<ScheduleOccurrenceViewModel> SelectedDayCourses { get; } = [];
-    public ObservableCollection<ScheduleTimeSlotViewModel> TimeSlots { get; } = [];
+    public ObservableCollection<SchedulePeriodViewModel> Periods { get; } = [];
     public ObservableCollection<SemesterStartOptionViewModel> SemesterStartOptions { get; } = [];
 
     [RelayCommand]
@@ -139,7 +141,14 @@ public partial class ScheduleViewModel : ViewModelBase
     [RelayCommand]
     private async Task ImportAsync()
     {
-        var file = await _pickers.PickOpenFileAsync("课程表文件", ".json", ".csv", ".ics", ".docx");
+        var file = await _pickers.PickOpenFileAsync(
+            "课程表文件",
+            ".json",
+            ".csv",
+            ".ics",
+            ".docx",
+            ".xls",
+            ".xlsx");
         if (file is null) return;
 
         try
@@ -149,6 +158,12 @@ public partial class ScheduleViewModel : ViewModelBase
             {
                 await using var stream = await file.OpenStreamForReadAsync();
                 imported = _wordImporter.Import(stream, DateOnly.FromDateTime(SemesterStartDate.Date));
+            }
+            else if (string.Equals(file.FileType, ".xls", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(file.FileType, ".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                await using var stream = await file.OpenStreamForReadAsync();
+                imported = _wordImporter.ImportExcel(stream, DateOnly.FromDateTime(SemesterStartDate.Date));
             }
             else
             {
@@ -206,6 +221,12 @@ public partial class ScheduleViewModel : ViewModelBase
         _ = SaveSemesterStartAsync(DateOnly.FromDateTime(value.Date));
     }
 
+    partial void OnSelectedSemesterStartOptionChanged(SemesterStartOptionViewModel? value)
+    {
+        if (!_initialized || value is null) return;
+        SemesterStartDate = value.Date;
+    }
+
     partial void OnShowWeekendsChanged(bool value)
     {
         if (!_initialized) return;
@@ -246,11 +267,24 @@ public partial class ScheduleViewModel : ViewModelBase
 
     private void LoadSchedule(CourseSchedule schedule)
     {
+        if (!_semesterStartRolloverChecked)
+        {
+            _semesterStartRolloverChecked = true;
+            var normalizedStart = NormalizeSemesterStartDate(schedule);
+            if (normalizedStart != schedule.SemesterStartDate)
+            {
+                schedule = schedule with { SemesterStartDate = normalizedStart };
+                _ = SaveSemesterStartAsync(normalizedStart);
+            }
+        }
+
         var selectedDate = SelectedDate == default ? DateTimeOffset.Now : SelectedDate;
         var editingCourseId = _editingCourseId;
         _initialized = false;
         SemesterStartDate = new DateTimeOffset(schedule.SemesterStartDate.ToDateTime(TimeOnly.MinValue));
         RebuildSemesterStartOptions(schedule.SemesterStartDate);
+        SelectedSemesterStartOption = SemesterStartOptions.FirstOrDefault(option =>
+            DateOnly.FromDateTime(option.Date.Date) == schedule.SemesterStartDate);
         SelectedDate = selectedDate;
         Courses.Clear();
         foreach (var course in schedule.Courses.OrderBy(course => course.Weekday).ThenBy(course => course.StartTime))
@@ -265,54 +299,83 @@ public partial class ScheduleViewModel : ViewModelBase
     {
         var schedule = _scheduleService.Schedule;
         var selectedDate = DateOnly.FromDateTime(SelectedDate.Date);
+        const double periodRowHeight = 40;
+        var periodDefinitions = schedule.GetTimelinePeriods();
+        if (periodDefinitions.Count == 0) periodDefinitions = DefaultPeriods;
+
+        TimelineHeight = periodDefinitions.Count * periodRowHeight + 1;
+        Periods.Clear();
+        for (var index = 0; index < periodDefinitions.Count; index++)
+        {
+            var period = periodDefinitions[index];
+            Periods.Add(new(
+                $"第{period.Number}节",
+                $"{period.StartTime:HH:mm}~{period.EndTime:HH:mm}",
+                index * periodRowHeight,
+                periodRowHeight,
+                period.StartTime,
+                period.EndTime));
+        }
+
         SelectedDayText = $"{FormatWeekday(selectedDate.DayOfWeek)} {selectedDate:MM月dd日} · 第 {schedule.GetWeekNumber(selectedDate)} 周";
         SelectedDayCourses.Clear();
         foreach (var course in schedule.GetCoursesOn(selectedDate))
-            SelectedDayCourses.Add(CreateOccurrence(course, selectedDate));
+            SelectedDayCourses.Add(CreateOccurrence(course, selectedDate, Periods));
 
         var weekStart = CourseSchedule.StartOfWeek(selectedDate);
         var dayCount = ShowWeekends ? 7 : 5;
         var dates = Enumerable.Range(0, dayCount)
             .Select(offset => weekStart.AddDays(offset))
             .ToArray();
-        var visibleCourses = dates
-            .SelectMany(date => schedule.GetCoursesOn(date))
-            .ToArray();
-        var firstMinute = visibleCourses.Length == 0
-            ? 8 * 60
-            : (int)Math.Floor(visibleCourses.Min(course => course.StartTime.ToTimeSpan().TotalMinutes) / 30) * 30;
-        var lastMinute = visibleCourses.Length == 0
-            ? 20 * 60
-            : (int)Math.Ceiling(visibleCourses.Max(course => course.EndTime.ToTimeSpan().TotalMinutes) / 30) * 30;
-        firstMinute = Math.Clamp(firstMinute, 0, 23 * 60);
-        lastMinute = Math.Clamp(lastMinute, firstMinute + 60, 24 * 60);
-        const double hourHeight = 52;
-        TimelineHeight = (lastMinute - firstMinute) / 60d * hourHeight + 12;
-        TimeSlots.Clear();
-        for (var minute = firstMinute; minute <= lastMinute; minute += 30)
-        {
-            var lineTop = (minute - firstMinute) / 60d * hourHeight;
-            TimeSlots.Add(new(
-                $"{minute / 60:00}:{minute % 60:00}",
-                lineTop,
-                Math.Max(0, lineTop - 8),
-                minute % 60 == 0));
-        }
-
         WeekDays.Clear();
         foreach (var date in dates)
         {
             var items = schedule.GetCoursesOn(date)
-                .Select(course => CreateOccurrence(course, date, firstMinute, hourHeight))
+                .Select(course => CreateOccurrence(course, date, Periods))
                 .ToArray();
             WeekDays.Add(new(
                 FormatWeekday(date.DayOfWeek),
                 date.ToString("MM/dd", System.Globalization.CultureInfo.InvariantCulture),
-                TimeSlots.ToArray(),
+                Periods.ToArray(),
                 items,
                 TimelineHeight));
         }
         NextCourseText = BuildNextCourseText(schedule, DateTime.Now);
+    }
+
+    private static DateOnly NormalizeSemesterStartDate(CourseSchedule schedule)
+    {
+        if (schedule.Courses.Count == 0) return schedule.SemesterStartDate;
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var lastWeek = schedule.Courses.Max(course => course.LastWeek);
+        var currentWeek = schedule.GetWeekNumber(today);
+        if (currentWeek >= 1 && currentWeek <= lastWeek) return schedule.SemesterStartDate;
+
+        return new[] { today.Year - 1, today.Year, today.Year + 1 }
+            .Select(year => DateInYear(schedule.SemesterStartDate, year))
+            .Where(candidate => candidate is not null)
+            .Select(candidate => candidate!.Value)
+            .Select(candidate => new
+            {
+                Date = candidate,
+                Week = new CourseSchedule(
+                    CourseSchedule.CurrentSchemaVersion,
+                    candidate,
+                    schedule.Courses,
+                    schedule.Periods).GetWeekNumber(today)
+            })
+            .Where(candidate => candidate.Week >= 1 && candidate.Week <= lastWeek)
+            .OrderBy(candidate => Math.Abs(candidate.Date.DayNumber - today.DayNumber))
+            .Select(candidate => candidate.Date)
+            .FirstOrDefault(schedule.SemesterStartDate);
+    }
+
+    private static DateOnly? DateInYear(DateOnly date, int year)
+    {
+        if (year is < 1 or > 9999 || date.Month == 2 && date.Day == 29 && !DateTime.IsLeapYear(year))
+            return null;
+        return new DateOnly(year, date.Month, date.Day);
     }
 
     private void RebuildSemesterStartOptions(DateOnly selectedDate)
@@ -331,24 +394,43 @@ public partial class ScheduleViewModel : ViewModelBase
     private static ScheduleOccurrenceViewModel CreateOccurrence(
         CourseEntry course,
         DateOnly date,
-        int firstMinute = 8 * 60,
-        double hourHeight = 52)
+        IReadOnlyList<SchedulePeriodViewModel> periods)
     {
         var now = DateTime.Now;
         var isToday = DateOnly.FromDateTime(now) == date;
         var isCurrent = isToday
             && course.StartTime <= TimeOnly.FromDateTime(now)
             && course.EndTime > TimeOnly.FromDateTime(now);
-        var startMinute = course.StartTime.ToTimeSpan().TotalMinutes;
-        var duration = course.EndTime.ToTimeSpan().TotalMinutes - startMinute;
+        var startIndex = periods.Count - 1;
+        for (var index = 0; index < periods.Count; index++)
+        {
+            if (course.StartTime >= periods[index].EndTime) continue;
+            startIndex = index;
+            break;
+        }
+
+        var endIndex = startIndex;
+        for (var index = startIndex; index < periods.Count; index++)
+        {
+            endIndex = index;
+            if (course.EndTime <= periods[index].EndTime) break;
+        }
+
+        var periodHeight = periods[startIndex].Height;
+        var weekText = course.FirstWeek == course.LastWeek
+            ? $"第{course.FirstWeek}周"
+            : $"{course.FirstWeek}-{course.LastWeek}周";
+        if (course.Parity == WeekParity.Odd) weekText += "(单)";
+        else if (course.Parity == WeekParity.Even) weekText += "(双)";
         return new(
             course.Name,
             $"{course.StartTime:HH:mm}-{course.EndTime:HH:mm}",
+            weekText,
             string.IsNullOrWhiteSpace(course.Location) ? string.Empty : course.Location,
             string.IsNullOrWhiteSpace(course.Teacher) ? string.Empty : course.Teacher,
             isCurrent,
-            (startMinute - firstMinute) / 60d * hourHeight + 2,
-            Math.Max(34, duration / 60d * hourHeight - 4));
+            periods[startIndex].Top + 2,
+            Math.Max(36, (endIndex - startIndex + 1) * periodHeight - 4));
     }
 
     private static string BuildNextCourseText(CourseSchedule schedule, DateTime now)
@@ -378,20 +460,40 @@ public partial class ScheduleViewModel : ViewModelBase
         DayOfWeek.Saturday => "周六",
         _ => "周日"
     };
+
+    private static readonly IReadOnlyList<SchedulePeriodEntry> DefaultPeriods =
+    [
+        new(1, new TimeOnly(8, 20), new TimeOnly(9, 0)),
+        new(2, new TimeOnly(9, 10), new TimeOnly(9, 50)),
+        new(3, new TimeOnly(10, 0), new TimeOnly(10, 40)),
+        new(4, new TimeOnly(10, 50), new TimeOnly(11, 30)),
+        new(5, new TimeOnly(11, 40), new TimeOnly(12, 20)),
+        new(6, new TimeOnly(14, 0), new TimeOnly(14, 40)),
+        new(7, new TimeOnly(14, 50), new TimeOnly(15, 30)),
+        new(8, new TimeOnly(15, 40), new TimeOnly(16, 20)),
+        new(9, new TimeOnly(16, 30), new TimeOnly(17, 10)),
+        new(10, new TimeOnly(17, 20), new TimeOnly(18, 0)),
+        new(11, new TimeOnly(19, 0), new TimeOnly(19, 40)),
+        new(12, new TimeOnly(19, 50), new TimeOnly(20, 30)),
+        new(13, new TimeOnly(20, 40), new TimeOnly(21, 20)),
+        new(14, new TimeOnly(21, 30), new TimeOnly(22, 20))
+    ];
 }
 
 public sealed record ScheduleDayViewModel(
     string DayName,
     string DateText,
-    IReadOnlyList<ScheduleTimeSlotViewModel> TimeSlots,
+    IReadOnlyList<SchedulePeriodViewModel> Periods,
     IReadOnlyList<ScheduleOccurrenceViewModel> Courses,
     double TimelineHeight);
 
-public sealed record ScheduleTimeSlotViewModel(
+public sealed record SchedulePeriodViewModel(
+    string PeriodText,
     string TimeText,
-    double LineTop,
-    double LabelTop,
-    bool IsHour);
+    double Top,
+    double Height,
+    TimeOnly StartTime,
+    TimeOnly EndTime);
 
 public sealed record SemesterStartOptionViewModel(
     DateTimeOffset Date,
@@ -400,8 +502,14 @@ public sealed record SemesterStartOptionViewModel(
 public sealed record ScheduleOccurrenceViewModel(
     string Name,
     string TimeText,
+    string WeekText,
     string Location,
     string Teacher,
     bool IsCurrent,
     double Top,
-    double Height);
+    double Height)
+{
+    public string DetailText => string.Join(
+        " · ",
+        new[] { WeekText, Teacher, Location }.Where(value => !string.IsNullOrWhiteSpace(value)));
+}

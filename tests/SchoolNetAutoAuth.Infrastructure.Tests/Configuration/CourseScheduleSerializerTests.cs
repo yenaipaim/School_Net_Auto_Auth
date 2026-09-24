@@ -18,6 +18,10 @@ public sealed class CourseScheduleSerializerTests
         var course = Assert.Single(result.Courses);
         Assert.Equal("高等数学", course.Name);
         Assert.Equal(WeekParity.Odd, course.Parity);
+        Assert.Collection(
+            result.GetTimelinePeriods(),
+            period => Assert.Equal(new TimeOnly(8, 0), period.StartTime),
+            period => Assert.Equal(new TimeOnly(9, 40), period.EndTime));
     }
 
     [Fact]
@@ -68,6 +72,10 @@ public sealed class CourseScheduleSerializerTests
         return new(
             CourseSchedule.CurrentSchemaVersion,
             new DateOnly(2026, 9, 7),
-            [course]);
+            [course],
+            [
+                new SchedulePeriodEntry(1, new TimeOnly(8, 0), new TimeOnly(8, 45)),
+                new SchedulePeriodEntry(2, new TimeOnly(8, 55), new TimeOnly(9, 40))
+            ]);
     }
 }

@@ -30,12 +30,18 @@ public sealed record CourseEntry(
         };
 }
 
+public sealed record SchedulePeriodEntry(
+    int Number,
+    TimeOnly StartTime,
+    TimeOnly EndTime);
+
 public sealed record CourseSchedule(
     int SchemaVersion,
     DateOnly SemesterStartDate,
-    IReadOnlyList<CourseEntry> Courses)
+    IReadOnlyList<CourseEntry> Courses,
+    IReadOnlyList<SchedulePeriodEntry>? Periods = null)
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     public static CourseSchedule CreateDefault()
     {
@@ -61,6 +67,26 @@ public sealed record CourseSchedule(
             .ToArray();
     }
 
+    public IReadOnlyList<SchedulePeriodEntry> GetTimelinePeriods()
+    {
+        var explicitPeriods = Periods?
+            .Where(period => period.Number > 0 && period.StartTime < period.EndTime)
+            .OrderBy(period => period.Number)
+            .ToArray() ?? [];
+        if (explicitPeriods.Length > 0) return explicitPeriods;
+
+        return Courses
+            .Select(course => (course.StartTime, course.EndTime))
+            .Distinct()
+            .OrderBy(period => period.StartTime)
+            .ThenBy(period => period.EndTime)
+            .Select((period, index) => new SchedulePeriodEntry(
+                index + 1,
+                period.StartTime,
+                period.EndTime))
+            .ToArray();
+    }
+
     public ScheduleValidationResult Validate()
     {
         var errors = new List<string>();
@@ -77,6 +103,23 @@ public sealed record CourseSchedule(
             .Select(group => group.Key)
             .ToArray();
         if (duplicateIds.Length > 0) errors.Add("课程标识重复。");
+
+        if (Periods is not null)
+        {
+            var duplicatePeriods = Periods
+                .GroupBy(period => period.Number)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .ToArray();
+            if (duplicatePeriods.Length > 0) errors.Add("节次编号重复。");
+
+            foreach (var period in Periods)
+            {
+                if (period.Number <= 0) errors.Add("节次编号必须大于 0。");
+                if (period.StartTime >= period.EndTime)
+                    errors.Add($"第 {period.Number} 节的结束时间必须晚于开始时间。");
+            }
+        }
 
         foreach (var course in Courses)
         {
