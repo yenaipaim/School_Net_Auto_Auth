@@ -15,9 +15,33 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
-        Forms.Application.EnableVisualStyles();
-        Forms.Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new InstallProgressForm());
+        AppDomain.CurrentDomain.UnhandledException += (_, eventArgs) =>
+        {
+            InstallerLog.Write(
+                "installer unhandled exception",
+                eventArgs.ExceptionObject as Exception
+                    ?? new InvalidOperationException(eventArgs.ExceptionObject?.ToString() ?? "未知错误。"));
+        };
+
+        try
+        {
+            InstallerLog.Write("installer process start");
+            Forms.Application.SetUnhandledExceptionMode(Forms.UnhandledExceptionMode.CatchException);
+            Forms.Application.ThreadException += (_, eventArgs) =>
+                InstallerLog.Write("installer UI exception", eventArgs.Exception);
+            Forms.Application.EnableVisualStyles();
+            Forms.Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new InstallProgressForm());
+        }
+        catch (Exception ex)
+        {
+            InstallerLog.Write("installer startup failed", ex);
+            Forms.MessageBox.Show(
+                $"安装程序启动失败。\n\n{ex.Message}\n\n错误详情已写入 installer.log。",
+                AppName,
+                Forms.MessageBoxButtons.OK,
+                Forms.MessageBoxIcon.Error);
+        }
     }
 
     internal static void Install(Action<InstallProgress> report)

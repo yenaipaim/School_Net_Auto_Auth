@@ -51,7 +51,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="48" />
                     </Grid.ColumnDefinitions>
-                    <Slider Header="透明度" Minimum="0" Maximum="100" StepFrequency="1"
+                    <Slider Header="不透明度（数值越高背景图越明显）" Minimum="0" Maximum="100" StepFrequency="1"
                             Value="{Binding BackgroundImageOpacityPercent, Mode=TwoWay}" />
                     <TextBlock Grid.Column="1" Text="{Binding BackgroundImageOpacityText}"
                                VerticalAlignment="Bottom" HorizontalAlignment="Right" />

@@ -145,6 +145,42 @@ public sealed class JsonSettingsStoreTests : IDisposable
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
     }
 
+    [Fact]
+    public async Task Save_WhenCanceled_KeepsExistingSettingsAndRemovesTemporaryFile()
+    {
+        var store = new JsonSettingsStore(_directory);
+        var original = AppSettings.CreateDefault();
+        await store.SaveAsync(original, CancellationToken.None);
+
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var changed = original with { BackgroundImageOpacity = 0.8 };
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => store.SaveAsync(changed, cancellation.Token));
+
+        Assert.Equal(original, await store.LoadAsync(CancellationToken.None));
+        Assert.Empty(Directory.GetFiles(_directory, "*.tmp"));
+    }
+
+    [Fact]
+    public async Task Save_ConcurrentWrites_LeaveValidSettingsAndNoTemporaryFiles()
+    {
+        var store = new JsonSettingsStore(_directory);
+        var settings = Enumerable.Range(1, 24)
+            .Select(index => AppSettings.CreateDefault() with
+            {
+                BackgroundImageOpacity = index / 100d
+            })
+            .ToArray();
+
+        await Task.WhenAll(settings.Select(value => store.SaveAsync(value, CancellationToken.None)));
+
+        var actual = await store.LoadAsync(CancellationToken.None);
+        Assert.InRange(actual.BackgroundImageOpacity, 0.01, 0.24);
+        Assert.Empty(Directory.GetFiles(_directory, "*.tmp"));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory)) Directory.Delete(_directory, recursive: true);

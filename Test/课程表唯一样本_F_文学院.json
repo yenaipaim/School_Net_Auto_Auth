@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 2,
+  "semesterStartDate": "2027-09-06",
+  "courses": [
+    {
+      "id": "fe02ee52-a81d-5478-a4d9-334eae380134",
+      "name": "中国古代文学",
+      "teacher": "林月",
+      "location": "文学楼L301",
+      "weekday": "Monday",
+      "startTime": "10:20:00",
+      "endTime": "12:20:00",
+      "firstWeek": 1,
+      "lastWeek": 16,
+      "parity": "All"
+    },
+    {
+      "id": "feab6f1d-2abc-5097-ad5d-b53c9e07095c",
+      "name": "汉语写作",
+      "teacher": "程然",
+      "location": "文学楼L102",
+      "weekday": "Monday",
+      "startTime": "16:00:00",
+      "endTime": "16:55:00",
+      "firstWeek": 1,
+      "lastWeek": 12,
+      "parity": "All"
+    },
+    {
+      "id": "d651e5e3-541a-5a15-98f1-440bbe8d37f5",
+      "name": "现代汉语",
+      "teacher": "吴桐",
+      "location": "文学楼L205",
+      "weekday": "Tuesday",
+      "startTime": "08:00:00",
+      "endTime": "08:55:00",
+      "firstWeek": 1,
+      "lastWeek": 16,
+      "parity": "All"
+    },
+    {
+      "id": "9e8098d1-03a4-5b03-89c6-d40faa2935f2",
+      "name": "外国文学史",
+      "teacher": "叶青",
+      "location": "文学楼L402",
+      "weekday": "Tuesday",
+      "startTime": "13:40:00",
+      "endTime": "15:40:00",
+      "firstWeek": 2,
+      "lastWeek": 16,
+      "parity": "All"
+    },
+    {
+      "id": "1415721d-3589-5b8b-96b3-281ece3f5031",
+      "name": "中国现当代文学",
+      "teacher": "郑妍",
+      "location": "文学楼L308",
+      "weekday": "Wednesday",
+      "startTime": "09:05:00",
+      "endTime": "11:15:00",
+      "firstWeek": 1,
+      "lastWeek": 15,
+      "parity": "Odd"
+    },
+    {
+      "id": "ed1bfe2a-5c73-5301-87bf-ce4ee03dfc39",
+      "name": "语言学概论",
+      "teacher": "范博",
+      "location": "文学楼L207",
+      "weekday": "Thursday",
+      "startTime": "08:00:00",
+      "endTime": "10:00:00",
+      "firstWeek": 1,
+      "lastWeek": 14,
+      "parity": "All"
+    },
+    {
+      "id": "2a21e5cb-c4b0-5c01-92a8-377b04510aa3",
+      "name": "文学评论",
+      "teacher": "周岚",
+      "location": "文学楼L506",
+      "weekday": "Thursday",
+      "startTime": "14:45:00",
+      "endTime": "16:55:00",
+      "firstWeek": 5,
+      "lastWeek": 16,
+      "parity": "All"
+    },
+    {
+      "id": "bf0be87b-5808-51ab-a0e4-5d4558bdec29",
+      "name": "创意写作",
+      "teacher": "顾言",
+      "location": "创作中心W201",
+      "weekday": "Friday",
+      "startTime": "10:20:00",
+      "endTime": "14:35:00",
+      "firstWeek": 1,
+      "lastWeek": 16,
+      "parity": "All"
+    }
+  ],
+  "periods": [
+    {
+      "number": 1,
+      "startTime": "08:00:00",
+      "endTime": "08:55:00"
+    },
+    {
+      "number": 2,
+      "startTime": "09:05:00",
+      "endTime": "10:00:00"
+    },
+    {
+      "number": 3,
+      "startTime": "10:20:00",
+      "endTime": "11:15:00"
+    },
+    {
+      "number": 4,
+      "startTime": "11:25:00",
+      "endTime": "12:20:00"
+    },
+    {
+      "number": 5,
+      "startTime": "13:40:00",
+      "endTime": "14:35:00"
+    },
+    {
+      "number": 6,
+      "startTime": "14:45:00",
+      "endTime": "15:40:00"
+    },
+    {
+      "number": 7,
+      "startTime": "16:00:00",
+      "endTime": "16:55:00"
+    }
+  ]
+}

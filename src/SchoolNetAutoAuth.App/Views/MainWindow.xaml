@@ -9,15 +9,20 @@
         </Grid.RowDefinitions>
         <Image x:Name="BackgroundImage" Grid.RowSpan="2" Stretch="UniformToFill"
                Opacity="0.45" IsHitTestVisible="False" />
-        <Grid Padding="18,0,12,0" Background="#EAF7F9FB">
+        <Grid Padding="18,0,12,0" Background="#73F7F9FB">
             <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
         </Grid>
         <NavigationView x:Name="Navigation" Grid.Row="1" PaneDisplayMode="Left"
                         IsBackButtonVisible="Collapsed" IsSettingsVisible="False"
                         SelectionChanged="Navigation_SelectionChanged"
-                        Background="{StaticResource AppNavigationPaneBackgroundBrush}">
+                        Background="Transparent">
             <NavigationView.Resources>
+                <!-- 内容区完全透明，让背景图像透出（不要在此处放不透明笔刷） -->
                 <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
+                <!-- 导航窗格保留半透明蒙版，保证菜单文字可读 -->
+                <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="{StaticResource AppNavigationPaneBackgroundColor}" />
+                <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="{StaticResource AppNavigationPaneBackgroundColor}" />
+                <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="{StaticResource AppNavigationPaneBackgroundColor}" />
             </NavigationView.Resources>
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="网络认证" Tag="network-root" SelectsOnInvoked="False" IsExpanded="True">

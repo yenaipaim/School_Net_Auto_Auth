@@ -5,7 +5,8 @@
              RequestedTheme="Light">
     <Application.Resources>
         <ResourceDictionary>
-            <SolidColorBrush x:Key="AppNavigationPaneBackgroundBrush" Color="#EAF3F5F7" />
+            <Color x:Key="AppNavigationPaneBackgroundColor">#8CF3F5F7</Color>
+            <SolidColorBrush x:Key="AppNavigationPaneBackgroundBrush" Color="{StaticResource AppNavigationPaneBackgroundColor}" />
             <SolidColorBrush x:Key="AppNavigationItemBackgroundBrush" Color="Transparent" />
             <SolidColorBrush x:Key="AppNavigationItemSelectedBackgroundBrush" Color="#DCEBFF" />
             <SolidColorBrush x:Key="AppNavigationItemPointerOverBackgroundBrush" Color="#E8EEF5" />

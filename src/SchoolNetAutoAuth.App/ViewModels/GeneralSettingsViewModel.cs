@@ -173,14 +173,14 @@ public partial class GeneralSettingsViewModel : ViewModelBase
             await Task.Delay(250, cancellationToken);
             await _controller.SaveSettingsAsync(
                 _controller.Settings with { BackgroundImageOpacity = Math.Clamp(percent / 100d, 0, 1) },
-                cancellationToken);
+                CancellationToken.None);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
         }
         catch (Exception ex)
         {
-            await _dialogs.ShowErrorAsync("保存背景透明度失败", ex.Message);
+            await _dialogs.ShowErrorAsync("保存背景不透明度失败", ex.Message);
         }
     }
 

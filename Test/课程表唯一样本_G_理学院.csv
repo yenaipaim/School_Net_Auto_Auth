@@ -1,0 +1,15 @@
+﻿Name,Teacher,Location,Weekday,StartTime,EndTime,FirstWeek,LastWeek,Parity
+高等代数,秦川,理科楼R401,Monday,08:30,09:05,1,16,All
+高等代数,秦川,理科楼R401,Monday,09:15,09:50,1,16,All
+高等代数,秦川,理科楼R401,Monday,10:00,10:35,1,16,All
+高等代数,秦川,理科楼R401,Monday,10:45,11:20,1,16,All
+数学分析,白露,理科楼R305,Tuesday,13:00,13:35,1,16,All
+Python 科学计算,陆航,计算中心C202,Tuesday,14:40,15:15,1,12,All
+Python 科学计算,陆航,计算中心C202,Tuesday,15:25,16:00,1,12,All
+离散数学,孙志,理科楼R208,Wednesday,09:15,09:50,1,15,All
+离散数学,孙志,理科楼R208,Wednesday,10:00,10:35,1,15,All
+大学物理,杨凯,物理楼P303,Thursday,08:30,09:05,1,16,All
+数值分析,罗欣,理科楼R506,Thursday,13:45,14:20,3,16,Odd
+数值分析,罗欣,理科楼R506,Thursday,14:40,15:15,3,16,Odd
+运筹学,朱丹,理科楼R310,Friday,10:45,11:20,1,14,All
+运筹学,朱丹,理科楼R310,Friday,13:00,13:35,1,14,All

@@ -8,6 +8,7 @@ public sealed class JsonSettingsStore : ISettingsStore
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = true };
     private readonly string _settingsPath;
+    private readonly SemaphoreSlim _saveGate = new(1, 1);
 
     public JsonSettingsStore(string rootDirectory)
     {
@@ -57,9 +58,36 @@ public sealed class JsonSettingsStore : ISettingsStore
     {
         var validation = settings.Validate();
         if (!validation.IsValid) throw new InvalidDataException(string.Join(Environment.NewLine, validation.Errors));
-        var tempPath = _settingsPath + ".tmp";
-        await using (var stream = File.Create(tempPath))
-            await JsonSerializer.SerializeAsync(stream, settings, JsonOptions, cancellationToken);
-        File.Move(tempPath, _settingsPath, overwrite: true);
+
+        await _saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var tempPath = $"{_settingsPath}.{Guid.NewGuid():N}.tmp";
+        try
+        {
+            await using (var stream = new FileStream(
+                tempPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                81920,
+                FileOptions.Asynchronous))
+            {
+                await JsonSerializer.SerializeAsync(stream, settings, JsonOptions, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            File.Move(tempPath, _settingsPath, overwrite: true);
+        }
+        finally
+        {
+            _saveGate.Release();
+            try
+            {
+                if (File.Exists(tempPath)) File.Delete(tempPath);
+            }
+            catch
+            {
+                // A canceled save must not hide its original error.
+            }
+        }
     }
 }
