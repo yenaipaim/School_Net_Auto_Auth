@@ -22,7 +22,7 @@ internal static class InstallerLog
                     .Append(' ')
                     .Append(message);
                 if (exception is not null)
-                    builder.Append(" error=").Append(exception.GetType().Name).Append(": ").Append(exception.Message);
+                    builder.Append(" error=").Append(exception.GetType().Name).Append(": ").Append(exception);
                 builder.AppendLine();
                 File.AppendAllText(LogPath, builder.ToString(), Encoding.UTF8);
             }

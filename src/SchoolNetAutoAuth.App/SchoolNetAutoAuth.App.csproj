@@ -14,7 +14,7 @@
     <PublishReadyToRun>false</PublishReadyToRun>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
-    <ApplicationIcon>..\..\img\图标.ico</ApplicationIcon>
+    <ApplicationIcon>..\..\img\NEW_TP.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../SchoolNetAutoAuth.Core/SchoolNetAutoAuth.Core.csproj" />
@@ -28,7 +28,7 @@
     <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\..\img\图标.ico" Link="App.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Content Include="..\..\img\NEW_TP.ico" Link="App.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="..\..\img\QQ.png" Link="Assets\QQ.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
     <Content Include="Assets\Icons\*.svg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
   </ItemGroup>

@@ -29,7 +29,14 @@ internal static class Program
             Forms.Application.SetUnhandledExceptionMode(Forms.UnhandledExceptionMode.CatchException);
             Forms.Application.ThreadException += (_, eventArgs) =>
                 InstallerLog.Write("installer UI exception", eventArgs.Exception);
-            Forms.Application.EnableVisualStyles();
+            try
+            {
+                Forms.Application.EnableVisualStyles();
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+            {
+                InstallerLog.Write("visual styles unavailable", ex);
+            }
             Forms.Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new InstallProgressForm());
         }

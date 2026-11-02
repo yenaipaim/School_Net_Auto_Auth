@@ -13,7 +13,7 @@ $env:NUGET_PACKAGES = Join-Path $root 'NuGet\packages'
 $env:USERPROFILE = $env:DOTNET_CLI_HOME
 $env:APPDATA = Join-Path $env:DOTNET_CLI_HOME 'AppData\Roaming'
 $env:LOCALAPPDATA = Join-Path $env:DOTNET_CLI_HOME 'AppData\Local'
-$publishOutput = Join-Path $root 'artifacts\publish\win-x64'
+$publishOutput = Join-Path $root 'artifacts\publish-final'
 $installerOutput = Join-Path $root 'artifacts\installer'
 $setupName = (-join ([char[]](0x6821,0x56ED,0x7F51,0x81EA,0x52A8,0x8BA4,0x8BC1))) + '-Setup.exe'
 
@@ -53,6 +53,7 @@ New-Item -ItemType Directory -Force -Path $appLocalCore, $appLocalDesktop, $appL
 Copy-Item -Path (Join-Path $coreRuntime.FullName '*') -Destination $appLocalCore -Recurse -Force
 Copy-Item -Path (Join-Path $desktopRuntime.FullName '*') -Destination $appLocalDesktop -Recurse -Force
 Copy-Item -Path (Join-Path $hostFxr.FullName '*') -Destination $appLocalFxr -Recurse -Force
+Get-ChildItem -LiteralPath $publishOutput -Filter '*.pdb' -File -Recurse | Remove-Item -Force
 
 $payload = Join-Path $root 'src\SchoolNetAutoAuth.Installer\payload.zip'
 if (Test-Path $payload) { Remove-Item -LiteralPath $payload -Force }
@@ -65,8 +66,22 @@ if ($LASTEXITCODE -ne 0) { throw 'Installer restore failed.' }
 if ($LASTEXITCODE -ne 0) { throw 'Installer publish failed.' }
 
 $setupPath = Join-Path $installerOutput $setupName
-Copy-Item -LiteralPath (Join-Path $installerOutput 'SchoolNetAutoAuth.Setup.exe') -Destination $setupPath -Force
+$publishedSetup = Join-Path $installerOutput 'SchoolNetAutoAuth.Setup.exe'
+Copy-Item -LiteralPath $publishedSetup -Destination $setupPath -Force
+Remove-Item -LiteralPath $publishedSetup -Force
+$publishedSymbols = [IO.Path]::ChangeExtension($publishedSetup, '.pdb')
+if (Test-Path -LiteralPath $publishedSymbols) { Remove-Item -LiteralPath $publishedSymbols -Force }
 if (-not (Test-Path $setupPath)) { throw 'Final setup executable is missing.' }
+
+# Artifacts inherit a low integrity label in sandboxed workspaces. Mark the
+# executable outputs as medium integrity so installers and portable builds can
+# write to the normal user profile when launched directly from this folder.
+& icacls $publishOutput /setintegritylevel '(OI)(CI)Medium' /T | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'Failed to set portable build integrity level.' }
+& icacls $setupPath /setintegritylevel Medium | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'Failed to set setup executable integrity level.' }
+Remove-Item -LiteralPath $payload -Force
+
 $setupHash = Get-FileHash -LiteralPath $setupPath -Algorithm SHA256
 $checksumPath = "$setupPath.sha256"
 $checksumLine = "$($setupHash.Hash.ToLowerInvariant())  $([IO.Path]::GetFileName($setupPath))"
