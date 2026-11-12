@@ -13,12 +13,19 @@ public sealed partial class SchedulePage : Page
 {
     private const double MinimumDayWidth = 118;
     private const double TimeAxisWidth = 78;
-    private static readonly SolidColorBrush HourLineBrush = new(Color.FromArgb(255, 215, 224, 232));
-    private static readonly SolidColorBrush CourseBackgroundBrush = new(Color.FromArgb(255, 232, 242, 252));
-    private static readonly SolidColorBrush CourseBorderBrush = new(Color.FromArgb(255, 169, 200, 231));
-    private static readonly SolidColorBrush SecondaryTextBrush = new(Color.FromArgb(255, 102, 120, 138));
-    private static readonly SolidColorBrush CurrentCourseBackgroundBrush = new(Color.FromArgb(255, 255, 244, 214));
-    private static readonly SolidColorBrush CurrentCourseBorderBrush = new(Color.FromArgb(255, 224, 180, 76));
+    // 时间轴颜色改为按需从设计令牌解析，跟随主题与强调色；
+    // 每次 RenderTimeline 重新取一次，主题切换后重绘即生效。
+    private static SolidColorBrush Token(string key, Color fallback) =>
+        new(Application.Current.Resources.TryGetValue(key, out object? value) && value is SolidColorBrush brush
+            ? brush.Color
+            : fallback);
+
+    private static SolidColorBrush HourLineBrush => Token("AppBorderBrush", Color.FromArgb(255, 63, 63, 70));
+    private static SolidColorBrush CourseBackgroundBrush => Token("AppPanelBrush", Color.FromArgb(255, 43, 43, 45));
+    private static SolidColorBrush CourseBorderBrush => Token("AppBorderStrongBrush", Color.FromArgb(255, 82, 82, 91));
+    private static SolidColorBrush SecondaryTextBrush => Token("AppMutedFgBrush", Color.FromArgb(255, 184, 184, 184));
+    private static SolidColorBrush CurrentCourseBackgroundBrush => Token("AppBrandSoftBgBrush", Color.FromArgb(255, 26, 120, 212));
+    private static SolidColorBrush CurrentCourseBorderBrush => Token("AppBrandBrush", Color.FromArgb(255, 0, 120, 212));
     private readonly ScheduleViewModel _viewModel;
     private bool _renderQueued;
     private bool _subscribed;
@@ -305,7 +312,7 @@ public sealed partial class SchedulePage : Page
             Background = course.IsCurrent ? CurrentCourseBackgroundBrush : CourseBackgroundBrush,
             BorderBrush = course.IsCurrent ? CurrentCourseBorderBrush : CourseBorderBrush,
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(3),
+            CornerRadius = new CornerRadius(0),
             Child = content
         };
         ToolTipService.SetToolTip(

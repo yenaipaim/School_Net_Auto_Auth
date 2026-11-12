@@ -1,12 +1,59 @@
-.dotnet/
-.dotnet10/
-.tools/
-.dotnet-home/
-NuGet/
-.superpowers/sdd/
+# ===== 构建产物 =====
 **/bin/
 **/obj/
 artifacts/
+publish/
+publish-*/
 src/SchoolNetAutoAuth.Installer/payload.zip
+
+# ===== 本地工具链与包缓存（体积大，可重新获取）=====
+.dotnet/
+.dotnet10/
+.dotnet-home/
+.tools/
+NuGet/
+.superpowers/sdd/
+
+# ===== 编辑器 / IDE =====
+.vs/
+.vscode/
+.idea/
 *.user
 *.suo
+*.userprefs
+*.swp
+*~
+
+# ===== 测试与覆盖率产物 =====
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+
+# ===== 临时与备份文件 =====
+*.log
+*.tmp
+*.bak
+*.orig
+*.rej
+*.pid
+*.cache
+
+# ===== 系统文件 =====
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# ===== 本地素材 / 截图 / 草稿 =====
+ui-preview*.png
+*.local.json
+*.local.md
+
+# ===== 个人课表样本（真实姓名学号，仅本地调试用）=====
+# Test/ 下的唯一样本是有意提交的脱敏测试数据，其余导出文件不入库。
+Test/*
+!Test/课程表唯一样本_*.*

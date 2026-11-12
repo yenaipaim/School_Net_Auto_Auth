@@ -2,52 +2,154 @@
     x:Class="SchoolNetAutoAuth.App.Views.RecordingPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="using:SchoolNetAutoAuth.App.Converters"
+    Background="Transparent"
     HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
-    <Grid Padding="32" RowSpacing="20">
-        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-        <StackPanel Spacing="6">
-            <TextBlock Text="认证流程" Style="{ThemeResource TitleTextBlockStyle}" />
-            <TextBlock Text="录制并管理网页认证点击步骤" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-        </StackPanel>
-        <Grid Grid.Row="1" ColumnSpacing="8">
+    <Page.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+    </Page.Resources>
+    <Grid RowSpacing="20" Padding="32,28,32,32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ===== 页头 ===== -->
+        <Grid Padding="0,0,0,16" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,0,0,1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button Command="{Binding StartCommand}" Style="{StaticResource AppPrimaryButtonStyle}" ToolTipService.ToolTip="开始录制">
-                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/play.svg" Width="16" Height="16" /><TextBlock Text="开始" /></StackPanel>
-            </Button>
-            <Button Grid.Column="1" Command="{Binding StopCommand}" Style="{StaticResource AppStopButtonStyle}" ToolTipService.ToolTip="结束录制">
-                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/square.svg" Width="16" Height="16" /><TextBlock Text="结束" /></StackPanel>
-            </Button>
-            <Button Grid.Column="2" Command="{Binding DeleteSelectedCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="删除选中步骤">
-                <Image Source="ms-appx:///Assets/Icons/trash.svg" Width="16" Height="16" />
-            </Button>
-            <Button Grid.Column="3" Command="{Binding ClearCommand}" Style="{StaticResource AppWarningButtonStyle}" ToolTipService.ToolTip="清除录制">
-                <Image Source="ms-appx:///Assets/Icons/eraser.svg" Width="16" Height="16" />
-            </Button>
-            <Button Grid.Column="4" Command="{Binding RecordAgainCommand}" Style="{StaticResource AppSuccessButtonStyle}" ToolTipService.ToolTip="重新录制">
-                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/refresh.svg" Width="16" Height="16" /><TextBlock Text="重新录制" /></StackPanel>
-            </Button>
-            <Button Grid.Column="5" Command="{Binding ImportCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导入配置">
-                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/import.svg" Width="16" Height="16" /><TextBlock Text="导入" /></StackPanel>
-            </Button>
-            <Button Grid.Column="6" Command="{Binding ExportCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导出配置">
-                <StackPanel Orientation="Horizontal" Spacing="6"><Image Source="ms-appx:///Assets/Icons/export.svg" Width="16" Height="16" /><TextBlock Text="导出" /></StackPanel>
-            </Button>
-            <TextBlock Grid.Column="7" Text="{Binding ProgressText}" VerticalAlignment="Center" HorizontalAlignment="Right"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <StackPanel Spacing="6">
+                <TextBlock Text="录制" Style="{StaticResource AppPageEyebrowTextStyle}" />
+                <TextBlock Text="认证流程" Style="{StaticResource AppPageTitleTextStyle}" />
+                <TextBlock Text="按真实认证顺序录制网页点击，重放时逐条执行" Style="{StaticResource AppPageDescriptionTextStyle}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                <Button Command="{Binding StartCommand}" Style="{StaticResource AppPrimaryButtonStyle}"
+                        ToolTipService.ToolTip="开始录制（服务会打开专用 Edge）">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE768;" FontSize="12" />
+                        <TextBlock Text="开始录制" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding StopCommand}" Style="{StaticResource AppDestructiveButtonStyle}"
+                        ToolTipService.ToolTip="结束录制">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE71A;" FontSize="12" />
+                        <TextBlock Text="结束录制" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
         </Grid>
-        <ListView Grid.Row="2" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep, Mode=TwoWay}">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid Padding="6" ColumnSpacing="12">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="48" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding Order}" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="1" Text="{Binding Description}" TextWrapping="Wrap" />
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+
+        <!-- ===== 工具条 + 进度读数 ===== -->
+        <Border Grid.Row="1" Style="{StaticResource AppCardStyle}" Padding="0">
+            <Grid MinHeight="48" Padding="12,8" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button Command="{Binding DeleteSelectedCommand}" Style="{StaticResource AppButtonStyle}"
+                            Height="32" Padding="10,0" ToolTipService.ToolTip="删除选中步骤">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE74D;" FontSize="11" />
+                            <TextBlock Text="删除" FontSize="12" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ClearCommand}" Style="{StaticResource AppWarningButtonStyle}"
+                            Height="32" Padding="10,0" ToolTipService.ToolTip="清除全部录制">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE7B8;" FontSize="11" />
+                            <TextBlock Text="清除" FontSize="12" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding RecordAgainCommand}" Style="{StaticResource AppSuccessButtonStyle}"
+                            Height="32" Padding="10,0" ToolTipService.ToolTip="清空后重新录制">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE72C;" FontSize="11" />
+                            <TextBlock Text="重新录制" FontSize="12" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                    <Button Command="{Binding ImportCommand}" Style="{StaticResource AppButtonStyle}"
+                            Height="32" Padding="10,0" ToolTipService.ToolTip="导入录制配置">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE896;" FontSize="11" />
+                            <TextBlock Text="导入" FontSize="12" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ExportCommand}" Style="{StaticResource AppButtonStyle}"
+                            Height="32" Padding="10,0" ToolTipService.ToolTip="导出录制配置">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xEDE1;" FontSize="11" />
+                            <TextBlock Text="导出" FontSize="12" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                            HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Ellipse Width="6" Height="6" Fill="{Binding ProgressBrush}" />
+                    <TextBlock Text="{Binding ProgressText}" Style="{StaticResource AppMonoMutedTextStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== 步骤序列 ===== -->
+        <Border Grid.Row="2" Style="{StaticResource AppCardStyle}" Padding="0">
+            <Grid RowSpacing="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid MinHeight="44" Padding="16,10" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,0,0,1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="步骤序列" Style="{StaticResource AppSectionTitleTextStyle}" />
+                        <TextBlock Text="重放时按此顺序定位元素；账号密码框由凭据管理器或 Edge 自动填充"
+                                   Style="{StaticResource AppCaptionTextStyle}" FontSize="12" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                               Text="{Binding StepCountText}" Style="{StaticResource AppMonoMutedTextStyle}" />
+                </Grid>
+
+                <ListView Grid.Row="1" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
+                          Style="{StaticResource AppListViewStyle}" BorderThickness="0"
+                          Background="Transparent" Padding="0,4">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="16,9" ColumnSpacing="14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="34" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Order}" Style="{StaticResource AppMonoTextStyle}"
+                                           FontSize="12" Foreground="{StaticResource AppMutedFgBrush}"
+                                           HorizontalTextAlignment="Left" />
+                                <TextBlock Grid.Column="1" Text="{Binding Description}" Style="{StaticResource AppBodyTextStyle}"
+                                           TextWrapping="Wrap" VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                    <!-- 空状态必须落在列表那一行，否则会盖到卡片标题上。 -->
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
+                                Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}"
+                                IsHitTestVisible="False">
+                        <TextBlock Text="还没有录制到任何步骤" Style="{StaticResource AppSectionLabelTextStyle}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="点「开始录制」，先在弹出的 Edge 里选择账号框与密码框，再按真实流程完成点击。"
+                                   Style="{StaticResource AppCaptionTextStyle}" HorizontalAlignment="Center"
+                                   MaxWidth="420" TextAlignment="Center" />
+                    </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Page>

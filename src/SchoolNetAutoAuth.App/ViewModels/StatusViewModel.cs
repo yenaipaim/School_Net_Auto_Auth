@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 using SchoolNetAutoAuth.App.Services;
 using SchoolNetAutoAuth.Core.Authentication;
 
@@ -10,6 +12,7 @@ public partial class StatusViewModel : ViewModelBase
     private readonly AppController _controller;
     private readonly DialogService _dialogs;
     private bool _initialized;
+    private bool _suppressWriteBack;
 
     [ObservableProperty] public partial string WifiName { get; set; } = "正在检测";
     [ObservableProperty] public partial string ConnectivityText { get; set; } = "正在检测";
@@ -42,6 +45,27 @@ public partial class StatusViewModel : ViewModelBase
         _ => "需要处理"
     };
 
+    /// <summary>联网状态读数颜色：可用取 success，不可用取 destructive。</summary>
+    public SolidColorBrush ConnectivityBrush =>
+        AppearanceBrush(ConnectivityText == "互联网可用" ? "AppSuccessBrush" : "AppDestructiveBrush");
+
+    /// <summary>认证状态读数颜色：与标题栏状态点同一套语义色。</summary>
+    public SolidColorBrush StateBrush => AppearanceBrush(_controller.Snapshot.AuthenticationState switch
+    {
+        AuthenticationState.Online => "AppSuccessBrush",
+        AuthenticationState.Authenticating or AuthenticationState.CheckingConnectivity => "AppInfoBrush",
+        AuthenticationState.RetryDelay or AuthenticationState.WaitingForCredentials => "AppWarningBrush",
+        AuthenticationState.ExternalActionCooldown => "AppDestructiveBrush",
+        _ => "AppMutedFgBrush"
+    });
+
+    public string PortalUriText => _controller.Settings.PortalUri.ToString();
+    public string ProbeUriText => _controller.Settings.ProbeUri.ToString();
+
+    private static SolidColorBrush AppearanceBrush(string key) =>
+        new((Microsoft.UI.Xaml.Application.Current.Resources.TryGetValue(key, out object? value)
+             && value is SolidColorBrush brush) ? brush.Color : Colors.Gray);
+
     [RelayCommand]
     private async Task AuthenticateAsync()
     {
@@ -54,7 +78,8 @@ public partial class StatusViewModel : ViewModelBase
 
     partial void OnAutomaticAuthenticationEnabledChanged(bool value)
     {
-        if (!_initialized) return;
+        // 设置变更事件会把外部的值同步进来，这不是用户操作，不能再写回磁盘。
+        if (!_initialized || _suppressWriteBack) return;
         _ = SaveAutomaticAuthenticationAsync(value);
     }
 
@@ -73,8 +98,14 @@ public partial class StatusViewModel : ViewModelBase
     private void Controller_SnapshotChanged(object? sender, RuntimeSnapshot snapshot) =>
         Dispatch(() => ApplySnapshot(snapshot));
 
-    private void Controller_SettingsChanged(object? sender, Core.Configuration.AppSettings settings) =>
-        Dispatch(() => AutomaticAuthenticationEnabled = settings.AutomaticAuthenticationEnabled);
+    private void Controller_SettingsChanged(object? sender, Core.Configuration.AppSettings settings) => Dispatch(() =>
+    {
+        _suppressWriteBack = true;
+        AutomaticAuthenticationEnabled = settings.AutomaticAuthenticationEnabled;
+        _suppressWriteBack = false;
+        OnPropertyChanged(nameof(PortalUriText));
+        OnPropertyChanged(nameof(ProbeUriText));
+    });
 
     private void ApplySnapshot(RuntimeSnapshot snapshot)
     {
@@ -82,5 +113,7 @@ public partial class StatusViewModel : ViewModelBase
         ConnectivityText = snapshot.IsConnected ? "互联网可用" : "互联网不可用";
         AuthenticationStateText = FormatAuthenticationState(snapshot.AuthenticationState);
         LastAuthenticationResult = snapshot.LastAuthenticationResult;
+        OnPropertyChanged(nameof(ConnectivityBrush));
+        OnPropertyChanged(nameof(StateBrush));
     }
 }

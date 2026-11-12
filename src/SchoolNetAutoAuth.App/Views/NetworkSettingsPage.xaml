@@ -1,24 +1,100 @@
 <Page
+    x:Name="PageRoot"
     x:Class="SchoolNetAutoAuth.App.Views.NetworkSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent"
     HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
-    <ScrollViewer VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel MaxWidth="680" Padding="32" HorizontalAlignment="Left" Spacing="18">
-            <StackPanel Spacing="6">
-                <TextBlock Text="网络设置" Style="{ThemeResource TitleTextBlockStyle}" />
-                <TextBlock Text="配置目标网络、认证入口和检测频率" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
-            <TextBox Header="目标 Wi-Fi" Text="{Binding TargetSsid, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBox Header="认证地址" Text="{Binding PortalUri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBox Header="联网检测地址" Text="{Binding ProbeUri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <NumberBox Header="未联网检测间隔（秒）" Value="{Binding NetworkCheckIntervalSeconds, Mode=TwoWay}"
-                       Minimum="3" Maximum="3600" SpinButtonPlacementMode="Inline" />
-            <ToggleSwitch Header="自动认证" IsOn="{Binding AutomaticAuthenticationEnabled, Mode=TwoWay}" />
-            <Button Command="{Binding SaveCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Padding="18,9">
-                <StackPanel Orientation="Horizontal" Spacing="8"><SymbolIcon Symbol="Save" /><TextBlock Text="保存设置" /></StackPanel>
-            </Button>
+    <ScrollViewer x:Name="PageScroll" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+                  Padding="32,28,32,32">
+        <StackPanel x:Name="PageContent" Spacing="20">
+
+            <Grid Padding="0,0,0,16" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,0,0,1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="6">
+                    <TextBlock Text="网络" Style="{StaticResource AppPageEyebrowTextStyle}" />
+                    <TextBlock Text="网络设置" Style="{StaticResource AppPageTitleTextStyle}" />
+                    <TextBlock Text="配置目标网络、认证入口和检测频率" Style="{StaticResource AppPageDescriptionTextStyle}" />
+                </StackPanel>
+                <Button Grid.Column="1" VerticalAlignment="Bottom" Command="{Binding SaveCommand}"
+                        Style="{StaticResource AppPrimaryButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE74E;" FontSize="12" />
+                        <TextBlock Text="保存设置" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- ===== 连接目标 ===== -->
+            <Border Style="{StaticResource AppCardStyle}" Padding="0">
+                <StackPanel>
+                    <Grid MinHeight="48" Padding="16,12" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,0,0,1">
+                        <StackPanel Spacing="3">
+                            <TextBlock Text="连接目标" Style="{StaticResource AppSectionTitleTextStyle}" />
+                            <TextBlock Text="只有连上这个 Wi-Fi 才会触发认证" Style="{StaticResource AppCaptionTextStyle}" FontSize="12" />
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Padding="16,14" Spacing="14">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="目标 Wi-Fi" Style="{StaticResource AppSectionLabelTextStyle}" />
+                            <TextBox Text="{Binding TargetSsid, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource AppTextBoxStyle}" PlaceholderText="例如 NSU-SDN" />
+                        </StackPanel>
+                        <Grid ColumnSpacing="14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="认证地址" Style="{StaticResource AppSectionLabelTextStyle}" />
+                                <TextBox Text="{Binding PortalUri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource AppTextBoxStyle}"
+                                         FontFamily="{StaticResource AppFontMono}" FontSize="12" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="6">
+                                <TextBlock Text="联网检测地址（必须 HTTPS）" Style="{StaticResource AppSectionLabelTextStyle}" />
+                                <TextBox Text="{Binding ProbeUri, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource AppTextBoxStyle}"
+                                         FontFamily="{StaticResource AppFontMono}" FontSize="12" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ===== 检测节奏 ===== -->
+            <Border Style="{StaticResource AppCardStyle}" Padding="0">
+                <StackPanel>
+                    <Grid MinHeight="48" Padding="16,12" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,0,0,1">
+                        <StackPanel Spacing="3">
+                            <TextBlock Text="检测节奏" Style="{StaticResource AppSectionTitleTextStyle}" />
+                            <TextBlock Text="未联网时的轮询间隔，联网后固定 30 分钟" Style="{StaticResource AppCaptionTextStyle}" FontSize="12" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Padding="16,14" ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="未联网检测间隔（秒）" Style="{StaticResource AppSectionLabelTextStyle}" />
+                            <NumberBox Value="{Binding NetworkCheckIntervalSeconds, Mode=TwoWay}"
+                                       Minimum="3" Maximum="3600" SpinButtonPlacementMode="Inline"
+                                       Style="{StaticResource AppNumberBoxStyle}" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Style="{StaticResource AppCardStyle}"
+                                Background="{StaticResource AppPanelBrush}" Padding="14,12" VerticalAlignment="Center">
+                            <ToggleSwitch Header="自动认证" IsOn="{Binding AutomaticAuthenticationEnabled, Mode=TwoWay}"
+                                          OnContent="按间隔自动重试" OffContent="仅手动认证"
+                                          Style="{StaticResource AppToggleSwitchStyle}" />
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </Page>

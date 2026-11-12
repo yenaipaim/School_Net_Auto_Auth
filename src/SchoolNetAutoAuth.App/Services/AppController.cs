@@ -83,11 +83,28 @@ public sealed class AppController : IAsyncDisposable
         if (!validation.IsValid)
             throw new InvalidDataException(string.Join(Environment.NewLine, validation.Errors));
 
+        // 只在开机启动项真的变化时才碰注册表：主题、透明度这类保存不该引入注册表副作用。
+        var startupChanged = settings.StartWithWindows != Settings.StartWithWindows;
+
         await _settingsStore.SaveAsync(settings, cancellationToken);
         Settings = settings;
-        _startup.SetEnabled(settings.StartWithWindows, Environment.ProcessPath ?? throw new InvalidOperationException("无法确定程序路径。"));
         _logger.Write(new(AppLogEvent.SettingsSaved));
         SettingsChanged?.Invoke(this, settings);
+
+        if (!startupChanged) return;
+        try
+        {
+            var processPath = Environment.ProcessPath;
+            if (!string.IsNullOrWhiteSpace(processPath))
+                _startup.SetEnabled(settings.StartWithWindows, processPath);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
+        {
+            // 组策略或安全软件可能禁止写入 Run 项；设置本身已经保存成功，这里只记录不阻断。
+            _logger.Write(new(AppLogEvent.UnexpectedError,
+                Message: "startup_registration_failed",
+                TechnicalDetail: ex.Message));
+        }
     }
 
     public Task SaveCredentialAsync(string username, string password, CancellationToken cancellationToken = default)

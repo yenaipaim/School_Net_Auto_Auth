@@ -11,7 +11,7 @@ public sealed class AppSettingsTests
         Assert.True(settings.AutomaticAuthenticationEnabled);
         Assert.Null(settings.BackgroundImagePath);
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
-        Assert.Equal(5, settings.SchemaVersion);
+        Assert.Equal(6, settings.SchemaVersion);
     }
 
     [Fact]
@@ -49,5 +49,22 @@ public sealed class AppSettingsTests
     {
         var settings = AppSettings.CreateDefault() with { BackgroundImageOpacity = 1.2 };
         Assert.False(settings.Validate().IsValid);
+    }
+
+    [Fact]
+    public void CreateDefault_UsesFlatAppearanceTokens()
+    {
+        var settings = AppSettings.CreateDefault();
+        Assert.Equal(AppSettings.DarkTheme, settings.Theme);
+        Assert.Equal("#0078D4", settings.AccentColor);
+        Assert.Null(settings.InterfaceFontFamily);
+    }
+
+    [Fact]
+    public void Validate_RejectsUnknownThemeAndMalformedAccent()
+    {
+        Assert.False((AppSettings.CreateDefault() with { Theme = "solarized" }).Validate().IsValid);
+        Assert.False((AppSettings.CreateDefault() with { AccentColor = "0078D4" }).Validate().IsValid);
+        Assert.True((AppSettings.CreateDefault() with { AccentColor = "#07d" }).Validate().IsValid);
     }
 }

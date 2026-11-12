@@ -51,7 +51,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(5, settings.SchemaVersion);
+        Assert.Equal(6, settings.SchemaVersion);
         Assert.True(settings.AutomaticAuthenticationEnabled);
         Assert.Null(settings.BackgroundImagePath);
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
@@ -81,7 +81,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(5, settings.SchemaVersion);
+        Assert.Equal(6, settings.SchemaVersion);
         Assert.True(settings.AutomaticAuthenticationEnabled);
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
     }
@@ -110,7 +110,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(5, settings.SchemaVersion);
+        Assert.Equal(6, settings.SchemaVersion);
         Assert.Null(settings.BackgroundImagePath);
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
     }
@@ -140,7 +140,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(5, settings.SchemaVersion);
+        Assert.Equal(6, settings.SchemaVersion);
         Assert.Equal("C:\\test\\background.png", settings.BackgroundImagePath);
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
     }

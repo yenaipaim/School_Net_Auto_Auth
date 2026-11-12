@@ -2,22 +2,38 @@
     x:Class="SchoolNetAutoAuth.App.Uninstallation.UninstallWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid MinWidth="560" MinHeight="340" Padding="28">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <TextBlock Text="卸载校园网自动认证" FontSize="22" FontWeight="SemiBold" />
-        <TextBlock Grid.Row="1" Margin="0,14,0,0" Text="程序文件、开机启动项和快捷方式将被删除。"
-                   TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-        <ScrollViewer Grid.Row="2" Margin="0,18,0,0" VerticalScrollBarVisibility="Auto">
-            <CheckBox x:Name="DeleteUserDataBox"
-                      Content="同时删除凭据、录制配置、日志和 Edge 登录状态" />
+    <ContentControl x:Name="Root" Background="{StaticResource AppBgBrush}" FontSize="13">
+        <!-- 窗口尺寸按 DPI 换算后仍可能小于内容，加滚动兜底避免按钮被裁掉。 -->
+        <ScrollViewer VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled">
+        <Grid MinWidth="520" MinHeight="330" Padding="28" RowSpacing="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="卸载" Style="{StaticResource AppPageEyebrowTextStyle}" />
+                <TextBlock Text="卸载校园网自动认证" Style="{StaticResource AppPageTitleTextStyle}" FontSize="22" />
+            </StackPanel>
+
+            <TextBlock Grid.Row="1" Margin="0,10,0,0" Style="{StaticResource AppCaptionTextStyle}"
+                       Text="程序文件、开机启动项和快捷方式将被删除。" />
+
+            <Border Grid.Row="2" Margin="0,18,0,0" Style="{StaticResource AppCardStyle}">
+                <CheckBox x:Name="DeleteUserDataBox" Style="{StaticResource AppCheckBoxStyle}"
+                          Content="同时删除凭据、录制配置、日志和 Edge 登录状态" />
+            </Border>
+
+            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right"
+                        Margin="0,20,0,0" Spacing="8">
+                <Button Content="取消" Click="Cancel_Click" Style="{StaticResource AppButtonStyle}" />
+                <Button Content="卸载" Click="Uninstall_Click" Style="{StaticResource AppDestructiveButtonStyle}" />
+            </StackPanel>
+        </Grid>
         </ScrollViewer>
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right"
-                    Margin="0,20,0,0" Spacing="8">
-            <Button Content="取消" Click="Cancel_Click" />
-            <Button Content="卸载" Click="Uninstall_Click" Style="{StaticResource AccentButtonStyle}" />
-        </StackPanel>
-    </Grid>
+    </ContentControl>
 </Window>

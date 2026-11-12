@@ -4,7 +4,11 @@ using CommunityToolkit.Mvvm.Input;
 using SchoolNetAutoAuth.App.Services;
 using SchoolNetAutoAuth.Core.Configuration;
 using SchoolNetAutoAuth.Infrastructure.Configuration;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Windows.Storage;
+using Windows.UI;
 
 namespace SchoolNetAutoAuth.App.ViewModels;
 
@@ -23,7 +27,9 @@ public partial class RecordingViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteSelectedCommand))]
     public partial RecordedClickStep? SelectedStep { get; set; }
-    [ObservableProperty] public partial string ProgressText { get; set; } = "准备就绪";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ProgressBrush))]
+    public partial string ProgressText { get; set; } = "准备就绪";
 
     public RecordingViewModel(AppController controller, DialogService dialogs, FilePickerService pickers, RecordingConfigurationSerializer serializer)
     {
@@ -38,6 +44,18 @@ public partial class RecordingViewModel : ViewModelBase
     }
 
     public ObservableCollection<RecordedClickStep> Steps { get; } = [];
+
+    /// <summary>步骤计数读数，随集合变化刷新。</summary>
+    public string StepCountText => $"{Steps.Count} 步";
+
+    /// <summary>没有录制步骤时显示叠层空态提示。</summary>
+    public bool IsEmpty => Steps.Count == 0;
+
+    /// <summary>进度指示灯颜色：录制中取品牌色，失败取 destructive，其余取 muted。</summary>
+    public SolidColorBrush ProgressBrush => new(RecordingAppearance(
+        IsRecording ? "AppBrandBrush"
+            : ProgressText == "录制失败" ? "AppDestructiveBrush"
+            : "AppMutedFgBrush"));
 
     [RelayCommand(CanExecute = nameof(CanExport))]
     private async Task ExportAsync()
@@ -115,6 +133,11 @@ public partial class RecordingViewModel : ViewModelBase
         await StartAsync();
     }
 
+    private static Color RecordingAppearance(string key) =>
+        Application.Current.Resources.TryGetValue(key, out object? value) && value is SolidColorBrush brush
+            ? brush.Color
+            : Colors.Gray;
+
     private void Controller_SettingsChanged(object? sender, AppSettings settings) =>
         Dispatch(() => RefreshSteps(settings));
 
@@ -139,5 +162,7 @@ public partial class RecordingViewModel : ViewModelBase
         Steps.Clear();
         foreach (var step in settings.RecordedSequence?.Clicks.OrderBy(step => step.Order) ?? Enumerable.Empty<RecordedClickStep>())
             Steps.Add(step);
+        OnPropertyChanged(nameof(StepCountText));
+        OnPropertyChanged(nameof(IsEmpty));
     }
 }

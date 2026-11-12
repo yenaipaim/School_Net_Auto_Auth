@@ -16,7 +16,7 @@ public sealed class DesktopNotificationService : IDisposable
                 ("认证需要手动处理", BuildBlockedMessage(notice.Message), TimeSpan.FromSeconds(30))
         };
         _current?.Close();
-        _current = new(title, message, duration);
+        _current = new(title, message, duration, notice.Kind == AuthenticationNoticeKind.Connected);
         _current.Closed += (_, _) => _current = null;
         _current.ShowInactive();
     }

@@ -69,7 +69,8 @@ public partial class App : Microsoft.UI.Xaml.Application
         _window = new MainWindow(
             _services.GetRequiredService<MainViewModel>(),
             windows,
-            _services.GetRequiredService<AppController>());
+            _services.GetRequiredService<AppController>(),
+            _services.GetRequiredService<DialogService>());
         _showWindowSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\SchoolNetAutoAuth.ShowWindow");
         _ = WaitForShowWindowAsync(windows, _activationLifetime.Token);
 
@@ -106,7 +107,9 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<WindowsWifiMonitor>();
         services.AddSingleton<INetworkMonitor>(provider => provider.GetRequiredService<WindowsWifiMonitor>());
         services.AddSingleton<HttpConnectivityProbe>();
-        services.AddSingleton<IConnectivityProbe>(provider => provider.GetRequiredService<HttpConnectivityProbe>());
+        // 联网判定以系统网络状态为主、HTTP 认证页检测为辅，而不是"能打开某个网站"。
+        services.AddSingleton<IConnectivityProbe>(provider => new SystemAwareConnectivityProbe(
+            provider.GetRequiredService<HttpConnectivityProbe>()));
         services.AddSingleton(_ => new EdgeSessionFactory(Path.Combine(root, "EdgeProfile")));
         services.AddSingleton<LocatorResolver>();
         services.AddSingleton<IAuthenticationRunner>(provider => new PlaywrightAuthenticationRunner(

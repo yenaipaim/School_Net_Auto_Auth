@@ -2,8 +2,9 @@
     x:Class="SchoolNetAutoAuth.App.Views.SchedulePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent"
     HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
-    <Grid Padding="20" RowSpacing="10">
+    <Grid RowSpacing="16" Padding="32,24,32,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -11,211 +12,242 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid ColumnSpacing="16">
+        <!-- ===== 页头 ===== -->
+        <Grid Padding="0,0,0,14" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,0,0,1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Spacing="6">
-                <TextBlock Text="课程表" Style="{ThemeResource TitleTextBlockStyle}" />
-                <TextBlock Text="管理课程、查看本周安排" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="工具" Style="{StaticResource AppPageEyebrowTextStyle}" />
+                <TextBlock Text="课程表" Style="{StaticResource AppPageTitleTextStyle}" />
+                <TextBlock Text="管理课程、查看本周安排" Style="{StaticResource AppPageDescriptionTextStyle}" />
             </StackPanel>
             <ToggleSwitch Grid.Column="1" Header="显示周末" IsOn="{Binding ShowWeekends, Mode=TwoWay}"
-                          VerticalAlignment="Top" />
+                          VerticalAlignment="Bottom" Style="{StaticResource AppToggleSwitchStyle}" />
         </Grid>
 
-        <Grid Grid.Row="1" ColumnSpacing="8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <Button Command="{Binding ImportCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导入课程表（DOCX、XLS、XLSX、JSON、CSV、ICS）">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="ms-appx:///Assets/Icons/import.svg" Width="16" Height="16" />
-                    <TextBlock Text="导入" />
-                </StackPanel>
-            </Button>
-            <Button Grid.Column="1" Command="{Binding ExportJsonCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导出 JSON">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="ms-appx:///Assets/Icons/export.svg" Width="16" Height="16" />
-                    <TextBlock Text="JSON" />
-                </StackPanel>
-            </Button>
-            <Button Grid.Column="2" Command="{Binding ExportCsvCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导出 CSV">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="ms-appx:///Assets/Icons/export.svg" Width="16" Height="16" />
-                    <TextBlock Text="CSV" />
-                </StackPanel>
-            </Button>
-            <Button Grid.Column="3" Command="{Binding ExportIcsCommand}" Style="{StaticResource AppButtonStyle}" ToolTipService.ToolTip="导出 ICS 日历">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="ms-appx:///Assets/Icons/export.svg" Width="16" Height="16" />
-                    <TextBlock Text="ICS" />
-                </StackPanel>
-            </Button>
-            <DropDownButton Grid.Column="4" HorizontalContentAlignment="Center"
-                            ToolTipService.ToolTip="管理课程">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <SymbolIcon Symbol="Edit" />
-                    <TextBlock Text="课程编辑" />
-                </StackPanel>
-                <DropDownButton.Flyout>
-                    <Flyout Placement="Bottom">
-                        <ScrollViewer Width="340" MaxHeight="620"
-                                      VerticalScrollMode="Enabled"
-                                      VerticalScrollBarVisibility="Auto">
-                            <StackPanel Spacing="10">
-                                <Grid ColumnSpacing="10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="课程编辑" Style="{ThemeResource SubtitleTextBlockStyle}"
-                                               VerticalAlignment="Center" />
-                                    <Button Grid.Column="1" Command="{Binding NewCourseCommand}"
-                                            Style="{StaticResource AppButtonStyle}"
-                                            ToolTipService.ToolTip="新增课程">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <SymbolIcon Symbol="Add" />
-                                            <TextBlock Text="新增" />
+        <!-- ===== 工具条 ===== -->
+        <Border Grid.Row="1" Style="{StaticResource AppCardStyle}" Padding="10,8">
+            <Grid ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Command="{Binding ImportCommand}" Style="{StaticResource AppButtonStyle}"
+                        Height="32" Padding="10,0"
+                        ToolTipService.ToolTip="导入课程表（DOCX、XLS、XLSX、JSON、CSV、ICS）">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE896;" FontSize="11" />
+                        <TextBlock Text="导入" FontSize="12" />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="1" Command="{Binding ExportJsonCommand}" Style="{StaticResource AppButtonStyle}"
+                        Height="32" Padding="10,0" ToolTipService.ToolTip="导出 JSON">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xEDE1;" FontSize="11" />
+                        <TextBlock Text="JSON" FontSize="12" />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="2" Command="{Binding ExportCsvCommand}" Style="{StaticResource AppButtonStyle}"
+                        Height="32" Padding="10,0" ToolTipService.ToolTip="导出 CSV">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xEDE1;" FontSize="11" />
+                        <TextBlock Text="CSV" FontSize="12" />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="3" Command="{Binding ExportIcsCommand}" Style="{StaticResource AppButtonStyle}"
+                        Height="32" Padding="10,0" ToolTipService.ToolTip="导出 ICS 日历">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xEDE1;" FontSize="11" />
+                        <TextBlock Text="ICS" FontSize="12" />
+                    </StackPanel>
+                </Button>
+                <DropDownButton Grid.Column="4" Height="32" Padding="10,0"
+                               Background="{StaticResource AppSurfaceBrush}"
+                               BorderBrush="{StaticResource AppBorderStrongBrush}" BorderThickness="1"
+                               CornerRadius="0" HorizontalContentAlignment="Center"
+                               ToolTipService.ToolTip="管理课程">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE70F;" FontSize="11" />
+                        <TextBlock Text="课程编辑" FontSize="12" />
+                    </StackPanel>
+                    <DropDownButton.Flyout>
+                        <Flyout Placement="Bottom">
+                            <ScrollViewer Width="360" MaxHeight="620"
+                                          VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="12">
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="课程编辑" Style="{StaticResource AppSectionTitleTextStyle}"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="1" Command="{Binding NewCourseCommand}"
+                                                Style="{StaticResource AppSmallButtonStyle}"
+                                                ToolTipService.ToolTip="新增课程">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon Glyph="&#xE710;" FontSize="11" />
+                                                <TextBlock Text="新增" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                    <ListView ItemsSource="{Binding Courses}"
+                                              SelectedItem="{Binding SelectedCourse, Mode=TwoWay}"
+                                              Height="126" Style="{StaticResource AppListViewStyle}">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnSpacing="8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Grid.Column="1" Text="{Binding Location}"
+                                                               Foreground="{StaticResource AppMutedFgBrush}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Text="课程名称" Style="{StaticResource AppSectionLabelTextStyle}" />
+                                        <TextBox Text="{Binding CourseName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource AppTextBoxStyle}" />
+                                    </StackPanel>
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="教师" Style="{StaticResource AppSectionLabelTextStyle}" />
+                                            <TextBox Text="{Binding Teacher, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource AppTextBoxStyle}" />
                                         </StackPanel>
-                                    </Button>
-                                </Grid>
-                                <ListView ItemsSource="{Binding Courses}"
-                                          SelectedItem="{Binding SelectedCourse, Mode=TwoWay}"
-                                          Height="126">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid ColumnSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="{Binding Name}"
-                                                           TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Location}"
-                                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                                <TextBox Header="课程名称"
-                                         Text="{Binding CourseName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                <Grid ColumnSpacing="10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Header="教师"
-                                             Text="{Binding Teacher, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBox Grid.Column="1" Header="地点"
-                                             Text="{Binding Location, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                </Grid>
-                                <ComboBox Header="星期" SelectedIndex="{Binding WeekdayIndex, Mode=TwoWay}">
-                                    <ComboBoxItem Content="周一" />
-                                    <ComboBoxItem Content="周二" />
-                                    <ComboBoxItem Content="周三" />
-                                    <ComboBoxItem Content="周四" />
-                                    <ComboBoxItem Content="周五" />
-                                    <ComboBoxItem Content="周六" />
-                                    <ComboBoxItem Content="周日" />
-                                </ComboBox>
-                                <Grid ColumnSpacing="10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TimePicker Header="开始" ClockIdentifier="24HourClock"
-                                                Time="{Binding StartTime, Mode=TwoWay}" />
-                                    <TimePicker Grid.Column="1" Header="结束" ClockIdentifier="24HourClock"
-                                                Time="{Binding EndTime, Mode=TwoWay}" />
-                                </Grid>
-                                <Grid ColumnSpacing="10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <NumberBox Header="起始周" Minimum="1" Maximum="52"
-                                               SpinButtonPlacementMode="Inline"
-                                               Value="{Binding FirstWeek, Mode=TwoWay}" />
-                                    <NumberBox Grid.Column="1" Header="结束周" Minimum="1" Maximum="52"
-                                               SpinButtonPlacementMode="Inline"
-                                               Value="{Binding LastWeek, Mode=TwoWay}" />
-                                </Grid>
-                                <ComboBox Header="单双周" SelectedIndex="{Binding ParityIndex, Mode=TwoWay}">
-                                    <ComboBoxItem Content="每周" />
-                                    <ComboBoxItem Content="单周" />
-                                    <ComboBoxItem Content="双周" />
-                                </ComboBox>
-                                <Grid ColumnSpacing="8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Button Command="{Binding SaveCourseCommand}"
-                                            Style="{StaticResource AppPrimaryButtonStyle}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <SymbolIcon Symbol="Save" />
-                                            <TextBlock Text="保存课程" />
+                                        <StackPanel Grid.Column="1" Spacing="5">
+                                            <TextBlock Text="地点" Style="{StaticResource AppSectionLabelTextStyle}" />
+                                            <TextBox Text="{Binding Location, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Style="{StaticResource AppTextBoxStyle}" />
                                         </StackPanel>
-                                    </Button>
-                                    <Button Grid.Column="1" Command="{Binding DeleteCourseCommand}"
-                                            Style="{StaticResource AppStopButtonStyle}"
-                                            ToolTipService.ToolTip="删除选中课程">
-                                        <Image Source="ms-appx:///Assets/Icons/trash.svg" Width="16" Height="16" />
-                                    </Button>
-                                </Grid>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Flyout>
-                </DropDownButton.Flyout>
-            </DropDownButton>
-            <Button Grid.Column="6" Command="{Binding SelectTodayCommand}" Style="{StaticResource AppButtonStyle}"
-                    HorizontalAlignment="Right" ToolTipService.ToolTip="定位到今天">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="ms-appx:///Assets/Icons/refresh.svg" Width="16" Height="16" />
-                    <TextBlock Text="今天" />
-                </StackPanel>
-            </Button>
-        </Grid>
+                                    </Grid>
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Text="星期" Style="{StaticResource AppSectionLabelTextStyle}" />
+                                        <ComboBox SelectedIndex="{Binding WeekdayIndex, Mode=TwoWay}"
+                                                  Style="{StaticResource AppComboBoxStyle}">
+                                            <ComboBoxItem Content="周一" />
+                                            <ComboBoxItem Content="周二" />
+                                            <ComboBoxItem Content="周三" />
+                                            <ComboBoxItem Content="周四" />
+                                            <ComboBoxItem Content="周五" />
+                                            <ComboBoxItem Content="周六" />
+                                            <ComboBoxItem Content="周日" />
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TimePicker Header="开始" ClockIdentifier="24HourClock"
+                                                    Time="{Binding StartTime, Mode=TwoWay}" />
+                                        <TimePicker Grid.Column="1" Header="结束" ClockIdentifier="24HourClock"
+                                                    Time="{Binding EndTime, Mode=TwoWay}" />
+                                    </Grid>
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <NumberBox Header="起始周" Minimum="1" Maximum="52"
+                                                   SpinButtonPlacementMode="Inline"
+                                                   Value="{Binding FirstWeek, Mode=TwoWay}"
+                                                   Style="{StaticResource AppNumberBoxStyle}" />
+                                        <NumberBox Grid.Column="1" Header="结束周" Minimum="1" Maximum="52"
+                                                   SpinButtonPlacementMode="Inline"
+                                                   Value="{Binding LastWeek, Mode=TwoWay}"
+                                                   Style="{StaticResource AppNumberBoxStyle}" />
+                                    </Grid>
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Text="单双周" Style="{StaticResource AppSectionLabelTextStyle}" />
+                                        <ComboBox SelectedIndex="{Binding ParityIndex, Mode=TwoWay}"
+                                                  Style="{StaticResource AppComboBoxStyle}">
+                                            <ComboBoxItem Content="每周" />
+                                            <ComboBoxItem Content="单周" />
+                                            <ComboBoxItem Content="双周" />
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button Command="{Binding SaveCourseCommand}" Style="{StaticResource AppPrimaryButtonStyle}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon Glyph="&#xE74E;" FontSize="11" />
+                                                <TextBlock Text="保存课程" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="1" Command="{Binding DeleteCourseCommand}"
+                                                Style="{StaticResource AppDestructiveButtonStyle}" Width="36" Padding="0"
+                                                ToolTipService.ToolTip="删除选中课程">
+                                            <FontIcon Glyph="&#xE74D;" FontSize="12" />
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Flyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+                <Button Grid.Column="6" Command="{Binding SelectTodayCommand}" Style="{StaticResource AppSmallButtonStyle}"
+                        HorizontalAlignment="Right" ToolTipService.ToolTip="定位到今天">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE72C;" FontSize="11" />
+                        <TextBlock Text="今天" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
 
-        <Grid Grid.Row="2" RowSpacing="10">
+        <!-- ===== 时间轴控制 + 网格 ===== -->
+        <Grid Grid.Row="2" RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Grid ColumnSpacing="12">
+            <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Width="162" Spacing="4">
-                    <TextBlock Text="学期开始" FontSize="12"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <StackPanel Width="172" Spacing="5">
+                    <TextBlock Text="学期开始" Style="{StaticResource AppSectionLabelTextStyle}" FontSize="11" />
                     <DropDownButton x:Name="SemesterStartButton" HorizontalAlignment="Stretch"
-                                    HorizontalContentAlignment="Stretch">
-                        <TextBlock Text="{Binding SelectedSemesterStartOption.Text}"
+                                   HorizontalContentAlignment="Stretch" Height="32"
+                                   Background="{StaticResource AppCardBrush}"
+                                   BorderBrush="{StaticResource AppInputBrush}" BorderThickness="1" CornerRadius="0">
+                        <TextBlock Text="{Binding SelectedSemesterStartOption.Text}" FontSize="12"
                                    TextTrimming="CharacterEllipsis" />
                         <DropDownButton.Flyout>
                             <Flyout Placement="BottomEdgeAlignedLeft">
                                 <ListView x:Name="SemesterStartList" Width="180" MaxHeight="240"
                                           ItemsSource="{Binding SemesterStartOptions}"
                                           SelectedItem="{Binding SelectedSemesterStartOption, Mode=TwoWay}"
-                                          SelectionMode="Single"
-                                          IsItemClickEnabled="True"
+                                          SelectionMode="Single" IsItemClickEnabled="True"
                                           ItemClick="SemesterStartList_ItemClick"
+                                          Style="{StaticResource AppListViewStyle}" BorderThickness="0"
                                           ScrollViewer.VerticalScrollMode="Enabled"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto">
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Text}" />
+                                            <TextBlock Text="{Binding Text}" FontSize="12" />
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                 </ListView>
@@ -223,17 +255,17 @@
                         </DropDownButton.Flyout>
                     </DropDownButton>
                 </StackPanel>
-                <CalendarDatePicker Grid.Column="1" Header="查看日期" Date="{Binding SelectedDate, Mode=TwoWay}" />
-                <StackPanel Grid.Column="2" Spacing="2" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                    <TextBlock Text="{Binding SelectedDayText}" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding NextCourseText}" FontSize="12"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               TextTrimming="CharacterEllipsis" />
+                <CalendarDatePicker Grid.Column="1" Header="查看日期" Width="200"
+                                    Date="{Binding SelectedDate, Mode=TwoWay}" />
+                <StackPanel Grid.Column="2" Spacing="3" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <TextBlock Text="{Binding SelectedDayText}" FontSize="13" FontWeight="Medium"
+                               HorizontalAlignment="Right" Foreground="{StaticResource AppFgBrush}" />
+                    <TextBlock Text="{Binding NextCourseText}" Style="{StaticResource AppCaptionTextStyle}" FontSize="11"
+                               HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" MaxWidth="360" />
                 </StackPanel>
             </Grid>
 
-            <Border Grid.Row="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1" CornerRadius="6" Padding="8">
+            <Border Grid.Row="1" Style="{StaticResource AppCardStyle}" Padding="8">
                 <Grid RowSpacing="6">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -244,17 +276,16 @@
                             <ColumnDefinition Width="78" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                BorderThickness="0,0,1,1">
+                        <Border BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="0,0,1,1">
                             <Grid Padding="4,4,4,3">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
                                 <TextBlock Text="星期" FontSize="11" FontWeight="SemiBold"
-                                           HorizontalAlignment="Center" />
+                                           Foreground="{StaticResource AppFgBrush}" HorizontalAlignment="Center" />
                                 <TextBlock Grid.Row="1" Text="节次" FontSize="11"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Foreground="{StaticResource AppMutedFgBrush}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
@@ -278,6 +309,6 @@
             </Border>
         </Grid>
 
-        <TextBlock Grid.Row="3" Text="{Binding StatusText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        <TextBlock Grid.Row="3" Text="{Binding StatusText}" Style="{StaticResource AppCaptionTextStyle}" FontSize="11" />
     </Grid>
 </Page>
