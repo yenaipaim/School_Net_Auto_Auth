@@ -7,6 +7,7 @@ public sealed class TrayIconService : IDisposable
 {
     private Forms.NotifyIcon? _icon;
     private Forms.ToolStripMenuItem? _statusItem;
+    private Forms.ToolStripMenuItem? _authenticateItem;
 
     public event EventHandler? AuthenticateRequested;
     public event EventHandler? ShowRequested;
@@ -16,8 +17,10 @@ public sealed class TrayIconService : IDisposable
     {
         if (_icon is not null) return;
         _statusItem = new Forms.ToolStripMenuItem("当前状态：正在初始化") { Enabled = false };
+        _authenticateItem = new Forms.ToolStripMenuItem("立即认证", null,
+            (_, _) => AuthenticateRequested?.Invoke(this, EventArgs.Empty));
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("立即认证", null, (_, _) => AuthenticateRequested?.Invoke(this, EventArgs.Empty));
+        menu.Items.Add(_authenticateItem);
         menu.Items.Add("打开主界面", null, (_, _) => ShowRequested?.Invoke(this, EventArgs.Empty));
         menu.Items.Add(_statusItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
@@ -30,6 +33,12 @@ public sealed class TrayIconService : IDisposable
             Visible = true
         };
         _icon.DoubleClick += (_, _) => ShowRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>未完成配置时把「立即认证」置灰，避免点了没有任何反应。</summary>
+    public void SetAuthenticateEnabled(bool enabled)
+    {
+        if (_authenticateItem is not null) _authenticateItem.Enabled = enabled;
     }
 
     public void UpdateStatus(string status)

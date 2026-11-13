@@ -9,8 +9,20 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <AssemblyName>SchoolNetAutoAuth.Setup</AssemblyName>
     <ApplicationIcon>..\..\img\NEW_TP.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <DpiAwareness>PerMonitorV2</DpiAwareness>
   </PropertyGroup>
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>SchoolNetAutoAuth.App.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="payload.zip" LogicalName="SchoolNetAutoAuth.payload.zip" Condition="Exists('payload.zip')" />
+    <EmbeddedResource Include="Assets\installer-left.jpg" LogicalName="SchoolNetAutoAuth.installer-left.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- 安装完成页展示当前 Wi-Fi；链接编译，避免安装器引用整个 Infrastructure。 -->
+    <Compile Include="..\SchoolNetAutoAuth.Infrastructure\Network\WlanNative.cs" Link="Network\WlanNative.cs" />
   </ItemGroup>
 </Project>

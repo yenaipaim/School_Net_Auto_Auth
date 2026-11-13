@@ -8,6 +8,11 @@ public sealed class WindowService
     private Window? _window;
 
     public bool IsExiting { get; set; }
+
+    /// <summary>请求把主窗口导航到指定页面标签（status / network / recording ...）。</summary>
+    public event Action<string>? NavigationRequested;
+
+    public void Navigate(string tag) => NavigationRequested?.Invoke(tag);
     public XamlRoot? XamlRoot => (_window?.Content as FrameworkElement)?.XamlRoot;
 
     public void Attach(Window window)

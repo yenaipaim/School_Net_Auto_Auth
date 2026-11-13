@@ -62,6 +62,9 @@ public sealed class AppController : IAsyncDisposable
     public event EventHandler<string>? RecordingProgressChanged;
     public event EventHandler<string>? RecordingFailed;
 
+    /// <summary>用户在没有完成配置时点了「立即认证」：由外壳弹一次首启提示，不写盘。</summary>
+    public event EventHandler? ConfigurationRequired;
+
     public async Task InitializeAsync()
     {
         _logger.Write(new(AppLogEvent.ApplicationStarted));
@@ -73,8 +76,24 @@ public sealed class AppController : IAsyncDisposable
 
     public async Task AuthenticateNowAsync(CancellationToken cancellationToken = default)
     {
+        if (!Settings.IsConfigured)
+        {
+            ConfigurationRequired?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token, cancellationToken);
         await _coordinator.EvaluateAsync(Settings, AuthenticationTrigger.Manual, linked.Token);
+    }
+
+    /// <summary>首启提示勾选「下次启动不再提示」时落盘；不触发开机启动自愈。</summary>
+    public async Task MarkFirstRunPromptShownAsync()
+    {
+        if (Settings.FirstRunPromptShown) return;
+        var settings = Settings with { FirstRunPromptShown = true };
+        await _settingsStore.SaveAsync(settings, CancellationToken.None);
+        Settings = settings;
+        SettingsChanged?.Invoke(this, settings);
     }
 
     public async Task SaveSettingsAsync(AppSettings settings, CancellationToken cancellationToken = default)
@@ -83,8 +102,12 @@ public sealed class AppController : IAsyncDisposable
         if (!validation.IsValid)
             throw new InvalidDataException(string.Join(Environment.NewLine, validation.Errors));
 
-        // 只在开机启动项真的变化时才碰注册表：主题、透明度这类保存不该引入注册表副作用。
-        var startupChanged = settings.StartWithWindows != Settings.StartWithWindows;
+        // 未完成配置时不注册开机自启：避免装完就开机启动一个空壳。
+        // 安装器不再注册自启，所以「配好配置」那一次保存必须把自启补上。
+        var shouldStartWithWindows = settings.StartWithWindows && settings.IsConfigured;
+        var previouslyStarting = Settings.StartWithWindows && Settings.IsConfigured;
+        var startupChanged = shouldStartWithWindows != previouslyStarting
+            || (shouldStartWithWindows && !_startup.IsRegistered());
 
         await _settingsStore.SaveAsync(settings, cancellationToken);
         Settings = settings;
@@ -96,7 +119,7 @@ public sealed class AppController : IAsyncDisposable
         {
             var processPath = Environment.ProcessPath;
             if (!string.IsNullOrWhiteSpace(processPath))
-                _startup.SetEnabled(settings.StartWithWindows, processPath);
+                _startup.SetEnabled(shouldStartWithWindows, processPath);
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
         {
@@ -120,11 +143,13 @@ public sealed class AppController : IAsyncDisposable
     public async Task StartRecordingAsync(CancellationToken cancellationToken = default)
     {
         if (_recordingTask is not null) return;
+        if (Settings.PortalUri is not { IsAbsoluteUri: true } portalUri)
+            throw new InvalidDataException("请先在网络设置里填写认证地址，再录制认证流程。");
         var recordingCancellation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token, cancellationToken);
         _recordingCancellation = recordingCancellation;
         var progress = new Progress<RecorderStep>(step => RecordingProgressChanged?.Invoke(this, step.Message));
         var recordingTask = new PlaywrightActionRecorder(_sessions, _resolver)
-            .RecordAsync(new(Settings.PortalUri), progress, recordingCancellation.Token);
+            .RecordAsync(new(portalUri), progress, recordingCancellation.Token);
         _recordingTask = recordingTask;
         _ = ObserveRecordingFailureAsync(recordingTask, recordingCancellation);
         _logger.Write(new(AppLogEvent.RecordingStarted));
@@ -200,6 +225,14 @@ public sealed class AppController : IAsyncDisposable
         {
             try
             {
+                if (!Settings.IsConfigured)
+                {
+                    // 未配置：不探测联网、不跑认证，只维持低频轮询等待用户填完设置。
+                    PublishSnapshot(_snapshot with { AuthenticationState = AuthenticationState.WaitingForTargetWifi });
+                    await Task.Delay(Settings.NetworkCheckInterval, cancellationToken);
+                    continue;
+                }
+
                 await RefreshNetworkSnapshotAsync(cancellationToken);
                 if (Settings.AutomaticAuthenticationEnabled)
                     await _coordinator.EvaluateAsync(Settings, AuthenticationTrigger.Background, cancellationToken);
@@ -223,7 +256,7 @@ public sealed class AppController : IAsyncDisposable
     private async Task RefreshNetworkSnapshotAsync(CancellationToken cancellationToken)
     {
         var network = await _network.GetSnapshotAsync(cancellationToken);
-        var online = network.IsConnected &&
+        var online = network.IsConnected && Settings.IsConfigured &&
             (await _probe.CheckAsync(Settings.ProbeUri, Settings.ProbeTimeout, cancellationToken)).IsOnline;
         PublishSnapshot(_snapshot with
         {

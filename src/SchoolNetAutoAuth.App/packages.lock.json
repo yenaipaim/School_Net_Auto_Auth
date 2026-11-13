@@ -116,7 +116,7 @@
         "dependencies": {
           "ExcelDataReader": "[3.7.0, )",
           "Microsoft.Playwright": "[1.55.0, )",
-          "SchoolNetAutoAuth.Core": "[1.3.7, )"
+          "SchoolNetAutoAuth.Core": "[2.1.0, )"
         }
       },
       "schoolnetautoauth.tray": {

@@ -51,7 +51,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(6, settings.SchemaVersion);
+        Assert.Equal(7, settings.SchemaVersion);
         Assert.True(settings.AutomaticAuthenticationEnabled);
         Assert.Null(settings.BackgroundImagePath);
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
@@ -81,7 +81,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(6, settings.SchemaVersion);
+        Assert.Equal(7, settings.SchemaVersion);
         Assert.True(settings.AutomaticAuthenticationEnabled);
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
     }
@@ -110,7 +110,7 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(6, settings.SchemaVersion);
+        Assert.Equal(7, settings.SchemaVersion);
         Assert.Null(settings.BackgroundImagePath);
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
     }
@@ -140,9 +140,80 @@ public sealed class JsonSettingsStoreTests : IDisposable
 
         var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
 
-        Assert.Equal(6, settings.SchemaVersion);
+        Assert.Equal(7, settings.SchemaVersion);
         Assert.Equal("C:\\test\\background.png", settings.BackgroundImagePath);
         Assert.Equal(0.45, settings.BackgroundImageOpacity);
+    }
+
+    [Fact]
+    public async Task Load_VersionSixConfig_MigratesToSevenAndStaysConfigured()
+    {
+        Directory.CreateDirectory(_directory);
+        var json = """
+        {
+          "schemaVersion": 6,
+          "targetSsid": "NSU-SDN",
+          "portalUri": "http://2.2.2.2",
+          "probeUri": "https://www.yuanshen.com",
+          "networkCheckInterval": "00:00:15",
+          "probeTimeout": "00:00:08",
+          "authenticationTimeout": "00:00:45",
+          "retryInterval": "00:00:10",
+          "maximumAttempts": 3,
+          "startWithWindows": true,
+          "automaticAuthenticationEnabled": true,
+          "backgroundImagePath": null,
+          "backgroundImageOpacity": 0.45,
+          "recordedSequence": null,
+          "theme": "dark",
+          "accentColor": "#0078D4",
+          "interfaceFontFamily": null
+        }
+        """;
+        await File.WriteAllTextAsync(Path.Combine(_directory, "settings.json"), json);
+
+        var settings = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
+
+        Assert.Equal(7, settings.SchemaVersion);
+        Assert.True(settings.IsConfigured);
+        Assert.Equal("NSU-SDN", settings.TargetSsid);
+        Assert.False(settings.FirstRunPromptShown);
+    }
+
+    [Fact]
+    public async Task Load_WhenValidateFails_KeepsFileAndReturnsDefaults()
+    {
+        Directory.CreateDirectory(_directory);
+        var settingsPath = Path.Combine(_directory, "settings.json");
+        var json = """
+        {
+          "schemaVersion": 7,
+          "targetSsid": "",
+          "portalUri": null,
+          "probeUri": "https://www.yuanshen.com",
+          "networkCheckInterval": "00:00:15",
+          "probeTimeout": "00:00:08",
+          "authenticationTimeout": "00:00:45",
+          "retryInterval": "00:00:00",
+          "maximumAttempts": 0,
+          "startWithWindows": true,
+          "automaticAuthenticationEnabled": true,
+          "backgroundImagePath": null,
+          "backgroundImageOpacity": 0.45,
+          "recordedSequence": null,
+          "theme": "dark",
+          "accentColor": "#0078D4",
+          "interfaceFontFamily": null,
+          "firstRunPromptShown": false
+        }
+        """;
+        await File.WriteAllTextAsync(settingsPath, json);
+
+        var actual = await new JsonSettingsStore(_directory).LoadAsync(CancellationToken.None);
+
+        Assert.Equal(AppSettings.CreateDefault(), actual);
+        Assert.True(File.Exists(settingsPath));
+        Assert.Empty(Directory.GetFiles(_directory, "settings.corrupt-*.json"));
     }
 
     [Fact]

@@ -86,6 +86,17 @@ public sealed partial class MainWindow : Window
         StatusNav.IsChecked = true;
         ContentFrame.Navigate(PageTypes["status"]);
         ApplySnapshot(_controller.Snapshot);
+
+        // 首启提示与状态页横幅都通过 WindowService 请求导航，避免 ViewModel 直接摸视觉树。
+        windows.NavigationRequested += tag => DispatcherQueue.TryEnqueue(() => NavigateFromRequest(tag));
+    }
+
+    private void NavigateFromRequest(string tag)
+    {
+        if (!PageTypes.ContainsKey(tag)) return;
+        var item = _navItems.FirstOrDefault(candidate => string.Equals(candidate.Tag as string, tag, StringComparison.Ordinal));
+        if (item is not null && item.IsChecked != true) item.IsChecked = true;
+        NavigateTo(tag);
     }
 
     // ===== 外观 =====

@@ -32,7 +32,9 @@ TestResults/
 coverage*.json
 coverage*.xml
 
-# ===== 临时与备份文件 =====
+# ===== 临时、草稿与备份（统统放 temp/，不入库）=====
+temp/
+tmp/
 *.log
 *.tmp
 *.bak
@@ -53,7 +55,9 @@ ui-preview*.png
 *.local.json
 *.local.md
 
-# ===== 个人课表样本（真实姓名学号，仅本地调试用）=====
-# Test/ 下的唯一样本是有意提交的脱敏测试数据，其余导出文件不入库。
-Test/*
-!Test/课程表唯一样本_*.*
+# ===== 个人课表样本与开发辅助脚本 =====
+# 导入用的真实课表样本、Python 生成脚本只在本机 temp/ 保留，不入库。
+# 单元测试所需数据由 tests/ 各测试项目内联构造。
+Test/
+scripts/generate_*.py
+scripts/schedule_test_data.py

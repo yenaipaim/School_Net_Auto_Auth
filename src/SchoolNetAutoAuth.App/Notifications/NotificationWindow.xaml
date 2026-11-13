@@ -5,8 +5,11 @@
     <!-- 桌面通知卡片：零圆角 + 左侧语义色竖条，与主窗口同一套令牌。 -->
     <!-- ContentControl 作根：它同时支持 RequestedTheme 与 FontFamily（继承给所有文本）。
          注意 ContentControl 的默认模板不绘制 Background，卡片底色必须放在 Border 上。 -->
-    <ContentControl x:Name="Root" Padding="0" FontSize="12">
-        <Border x:Name="Card"
+    <!-- 内容必须拉伸填满窗口：默认左对齐时，短文本会让卡片只占左侧一块，
+         右边露出未绘制的黑色区域。 -->
+    <ContentControl x:Name="Root" Padding="0" FontSize="12"
+                    HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+        <Border x:Name="Card" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 Background="{StaticResource AppCardBrush}"
                 BorderBrush="{StaticResource AppBorderStrongBrush}"
                 BorderThickness="1">

@@ -34,6 +34,14 @@ public sealed class StartupTaskManager
         }
     }
 
+    /// <summary>计划任务与旧版 Run 项任一存在即视为已注册，供设置保存时自愈判断。</summary>
+    public bool IsRegistered()
+    {
+        if (_registry.IsEnabled()) return true;
+        try { return _run("schtasks.exe", ["/Query", "/TN", TaskName]) == 0; }
+        catch { return false; }
+    }
+
     public void Remove()
     {
         try { _run("schtasks.exe", BuildRemovalArguments()); }

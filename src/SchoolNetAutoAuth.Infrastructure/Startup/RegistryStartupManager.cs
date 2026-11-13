@@ -14,6 +14,12 @@ public sealed class RegistryStartupManager
         else key.DeleteValue(ValueName, throwOnMissingValue: false);
     }
 
+    public bool IsEnabled()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(KeyPath);
+        return key?.GetValue(ValueName) is string value && value.Length > 0;
+    }
+
     public void Remove()
     {
         using var key = Registry.CurrentUser.OpenSubKey(KeyPath, writable: true);

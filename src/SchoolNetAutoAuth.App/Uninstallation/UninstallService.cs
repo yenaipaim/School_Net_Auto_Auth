@@ -19,23 +19,60 @@ public static class UninstallService
         Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\SchoolNetAutoAuth", throwOnMissingSubKey: false);
 
         var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
-        foreach (var shortcut in new[] { Path.Combine(programs, AppName + ".lnk"), Path.Combine(programs, "卸载" + AppName + ".lnk") })
+        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        foreach (var shortcut in new[]
+                 {
+                     Path.Combine(programs, AppName + ".lnk"),
+                     Path.Combine(programs, "卸载" + AppName + ".lnk"),
+                     Path.Combine(desktop, AppName + ".lnk")
+                 })
+        {
             if (File.Exists(shortcut)) File.Delete(shortcut);
+        }
 
         if (plan.DeleteCredential) DeleteCredential();
         if (plan.DeleteUserData && Directory.Exists(plan.UserDataDirectory))
             Directory.Delete(plan.UserDataDirectory, recursive: true);
     }
 
+    /// <summary>
+    /// 卸载只拒绝「明显不该删」的位置：根目录、网络位置、移动盘、Windows 目录。
+    /// 不再限定 %LOCALAPPDATA%\Programs，否则自定义安装路径的用户永远卸不干净。
+    /// </summary>
     public static string ValidateInstallDirectory(string installDirectory)
     {
-        var normalized = Path.GetFullPath(installDirectory).TrimEnd(Path.DirectorySeparatorChar);
-        var expectedRoot = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs"))
-            .TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        if (!normalized.StartsWith(expectedRoot, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("安装目录不在允许的用户程序目录中。");
+        if (string.IsNullOrWhiteSpace(installDirectory))
+            throw new InvalidOperationException("安装目录为空。");
+
+        var normalized = Path.GetFullPath(installDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (normalized.Length > 240)
+            throw new InvalidOperationException("安装目录过长，已拒绝自动删除。");
+        if (normalized.StartsWith(@"\\", StringComparison.Ordinal))
+            throw new InvalidOperationException("不支持网络位置上的安装目录。");
+
+        var root = Path.GetPathRoot(normalized);
+        if (string.IsNullOrEmpty(root)
+            || normalized.Length <= root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Length)
+        {
+            throw new InvalidOperationException("安装目录不能是磁盘根目录。");
+        }
+
+        if (new DriveInfo(root).DriveType != DriveType.Fixed)
+            throw new InvalidOperationException("安装目录不在本地固定磁盘上。");
+
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        if (IsUnder(normalized, windows) || IsUnder(normalized, Environment.SystemDirectory))
+            throw new InvalidOperationException("安装目录位于系统目录中。");
+
         return normalized;
     }
+
+    private static bool IsUnder(string path, string parent) =>
+        !string.IsNullOrEmpty(parent)
+        && (path.Equals(parent, StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith(parent.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar,
+                StringComparison.OrdinalIgnoreCase));
 
     public static void ScheduleInstallDirectoryRemoval(string installDirectory)
     {

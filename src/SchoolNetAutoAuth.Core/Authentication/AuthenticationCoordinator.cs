@@ -37,6 +37,13 @@ public sealed class AuthenticationCoordinator
             return;
         try
         {
+            if (!settings.IsConfigured)
+            {
+                // 未配置等同于「等待目标 Wi-Fi」：不探测、不启动浏览器。
+                SetState(AuthenticationState.WaitingForTargetWifi);
+                return;
+            }
+
             if (trigger == AuthenticationTrigger.Manual) RetryNotBeforeUtc = null;
             var snapshot = await _network.GetSnapshotAsync(cancellationToken);
             if (!snapshot.IsConnected || !string.Equals(snapshot.Ssid, settings.TargetSsid, StringComparison.Ordinal))

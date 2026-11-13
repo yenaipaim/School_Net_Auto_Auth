@@ -11,6 +11,10 @@ public static class InstallVersionPolicy
         return string.IsNullOrWhiteSpace(value) ? "0.0.0" : value.Trim();
     }
 
+    /// <summary>显示用版本号：去掉 SourceLink 追加的 +commit 元数据。</summary>
+    public static string NormalizeDisplayVersion(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? "0.0.0" : value.Split('+', 2)[0].Trim();
+
     public static bool IsDowngrade(string? installedVersion, string? incomingVersion)
     {
         var installed = ParseVersion(installedVersion);

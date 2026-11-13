@@ -12,7 +12,21 @@ public sealed class AuthenticationCoordinatorTests
         var probe = new FakeProbe(true);
         var runner = new FakeRunner(AuthenticationResult.Success());
         var coordinator = new AuthenticationCoordinator(new FakeNetwork("Other"), probe, runner);
-        await coordinator.EvaluateAsync(AppSettings.CreateDefault(), AuthenticationTrigger.Background, default);
+        await coordinator.EvaluateAsync(ConfiguredSettings(), AuthenticationTrigger.Background, default);
+        Assert.Equal(AuthenticationState.WaitingForTargetWifi, coordinator.State);
+        Assert.Equal(0, probe.Calls);
+        Assert.Equal(0, runner.Calls);
+    }
+
+    [Fact]
+    public async Task Evaluate_Unconfigured_DoesNotProbeOrAuthenticate()
+    {
+        var probe = new FakeProbe(true);
+        var runner = new FakeRunner(AuthenticationResult.Success());
+        var coordinator = new AuthenticationCoordinator(new FakeNetwork("NSU-SDN"), probe, runner);
+
+        await coordinator.EvaluateAsync(AppSettings.CreateDefault(), AuthenticationTrigger.Manual, default);
+
         Assert.Equal(AuthenticationState.WaitingForTargetWifi, coordinator.State);
         Assert.Equal(0, probe.Calls);
         Assert.Equal(0, runner.Calls);
@@ -26,9 +40,9 @@ public sealed class AuthenticationCoordinatorTests
         var notices = new List<AuthenticationNotice>();
         coordinator.NoticeRaised += (_, notice) => notices.Add(notice);
 
-        await coordinator.EvaluateAsync(AppSettings.CreateDefault(), AuthenticationTrigger.Background, default);
-        await coordinator.EvaluateAsync(AppSettings.CreateDefault(), AuthenticationTrigger.Background, default);
-        await coordinator.EvaluateAsync(AppSettings.CreateDefault(), AuthenticationTrigger.Background, default);
+        await coordinator.EvaluateAsync(ConfiguredSettings(), AuthenticationTrigger.Background, default);
+        await coordinator.EvaluateAsync(ConfiguredSettings(), AuthenticationTrigger.Background, default);
+        await coordinator.EvaluateAsync(ConfiguredSettings(), AuthenticationTrigger.Background, default);
 
         Assert.Single(notices.Where(notice => notice.Kind == AuthenticationNoticeKind.Connected));
     }
@@ -38,7 +52,7 @@ public sealed class AuthenticationCoordinatorTests
     {
         var runner = new FakeRunner(AuthenticationResult.Success());
         var coordinator = new AuthenticationCoordinator(new FakeNetwork("NSU-SDN"), new FakeProbe(false), runner);
-        await coordinator.EvaluateAsync(AppSettings.CreateDefault(), AuthenticationTrigger.Background, default);
+        await coordinator.EvaluateAsync(ConfiguredSettings(), AuthenticationTrigger.Background, default);
         Assert.Equal(AuthenticationState.Online, coordinator.State);
         Assert.Equal(1, runner.Calls);
     }
@@ -52,7 +66,7 @@ public sealed class AuthenticationCoordinatorTests
         AuthenticationNotice? notice = null;
         coordinator.NoticeRaised += (_, value) => notice = value;
 
-        await coordinator.EvaluateAsync(AppSettings.CreateDefault() with { MaximumAttempts = 1 }, AuthenticationTrigger.Background, default);
+        await coordinator.EvaluateAsync(ConfiguredSettings() with { MaximumAttempts = 1 }, AuthenticationTrigger.Background, default);
 
         Assert.Equal(AuthenticationState.ExternalActionCooldown, coordinator.State);
         Assert.Equal(clock.GetUtcNow().AddMinutes(5), coordinator.RetryNotBeforeUtc);
@@ -66,7 +80,7 @@ public sealed class AuthenticationCoordinatorTests
         var probe = new FakeProbe(false);
         var runner = new FakeRunner(new(AuthenticationOutcome.ExternalActionRequired, "device_limit", ExternalActionKind.DeviceLimit, "在线设备达到上限"));
         var coordinator = new AuthenticationCoordinator(new FakeNetwork("NSU-SDN"), probe, runner, clock);
-        var settings = AppSettings.CreateDefault() with { MaximumAttempts = 1 };
+        var settings = ConfiguredSettings() with { MaximumAttempts = 1 };
         await coordinator.EvaluateAsync(settings, AuthenticationTrigger.Background, default);
 
         await coordinator.EvaluateAsync(settings, AuthenticationTrigger.Background, default);
@@ -82,7 +96,7 @@ public sealed class AuthenticationCoordinatorTests
         var clock = new ManualTimeProvider(new DateTimeOffset(2026, 9, 17, 10, 0, 0, TimeSpan.Zero));
         var runner = new FakeRunner(new(AuthenticationOutcome.ExternalActionRequired, "device_limit", ExternalActionKind.DeviceLimit, "在线设备达到上限"));
         var coordinator = new AuthenticationCoordinator(new FakeNetwork("NSU-SDN"), new FakeProbe(false), runner, clock);
-        var settings = AppSettings.CreateDefault() with { MaximumAttempts = 1 };
+        var settings = ConfiguredSettings() with { MaximumAttempts = 1 };
         await coordinator.EvaluateAsync(settings, AuthenticationTrigger.Background, default);
         clock.Advance(TimeSpan.FromMinutes(5));
 
@@ -98,7 +112,7 @@ public sealed class AuthenticationCoordinatorTests
         var clock = new ManualTimeProvider(new DateTimeOffset(2026, 9, 17, 10, 0, 0, TimeSpan.Zero));
         var runner = new FakeRunner(new(AuthenticationOutcome.ExternalActionRequired, "phone_verification", ExternalActionKind.PhoneVerification, "需要电话验证"));
         var coordinator = new AuthenticationCoordinator(new FakeNetwork("NSU-SDN"), new FakeProbe(false), runner, clock);
-        var settings = AppSettings.CreateDefault() with { MaximumAttempts = 1 };
+        var settings = ConfiguredSettings() with { MaximumAttempts = 1 };
         await coordinator.EvaluateAsync(settings, AuthenticationTrigger.Background, default);
 
         await coordinator.EvaluateAsync(settings, AuthenticationTrigger.Manual, default);
@@ -111,7 +125,7 @@ public sealed class AuthenticationCoordinatorTests
     {
         var runner = new BlockingThenSuccessRunner();
         var coordinator = new AuthenticationCoordinator(new FakeNetwork("NSU-SDN"), new FakeProbe(false), runner);
-        var settings = AppSettings.CreateDefault() with { MaximumAttempts = 1 };
+        var settings = ConfiguredSettings() with { MaximumAttempts = 1 };
         var background = coordinator.EvaluateAsync(settings, AuthenticationTrigger.Background, default);
         await runner.FirstCallStarted.Task;
 
@@ -133,7 +147,7 @@ public sealed class AuthenticationCoordinatorTests
         var coordinator = new AuthenticationCoordinator(new FakeNetwork("NSU-SDN"), probe, runner, clock);
         var notices = new List<AuthenticationNotice>();
         coordinator.NoticeRaised += (_, value) => notices.Add(value);
-        var settings = AppSettings.CreateDefault() with { MaximumAttempts = 1 };
+        var settings = ConfiguredSettings() with { MaximumAttempts = 1 };
         await coordinator.EvaluateAsync(settings, AuthenticationTrigger.Background, default);
 
         await coordinator.EvaluateAsync(settings, AuthenticationTrigger.Background, default);
@@ -143,6 +157,12 @@ public sealed class AuthenticationCoordinatorTests
         Assert.Equal(AuthenticationState.Online, coordinator.State);
         Assert.Single(notices.Where(x => x.Kind == AuthenticationNoticeKind.Connected));
     }
+
+    private static AppSettings ConfiguredSettings() => AppSettings.CreateDefault() with
+    {
+        TargetSsid = "NSU-SDN",
+        PortalUri = new Uri("http://2.2.2.2")
+    };
 
     private sealed class FakeNetwork(string ssid) : INetworkMonitor { public Task<NetworkSnapshot> GetSnapshotAsync(CancellationToken token) => Task.FromResult(new NetworkSnapshot(ssid, true)); }
     private sealed class SequenceNetwork(params string[] ssids) : INetworkMonitor

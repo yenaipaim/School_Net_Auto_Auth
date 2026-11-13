@@ -42,11 +42,25 @@ public sealed class UninstallPlanTests
     }
 
     [Fact]
-    public void ValidateInstallDirectory_AcceptsOnlyCurrentUserProgramsDirectory()
+    public void ValidateInstallDirectory_AcceptsDefaultAndCustomLocalDirectories()
     {
         var expected = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "SchoolNetAutoAuth");
+        var custom = Path.Combine(Path.GetTempPath(), "SchoolNetAutoAuthUninstallFixture");
 
         Assert.Equal(Path.GetFullPath(expected), UninstallService.ValidateInstallDirectory(expected));
-        Assert.Throws<InvalidOperationException>(() => UninstallService.ValidateInstallDirectory(Path.GetTempPath()));
+        Assert.Equal(Path.GetFullPath(custom).TrimEnd(Path.DirectorySeparatorChar),
+            UninstallService.ValidateInstallDirectory(custom));
+    }
+
+    [Fact]
+    public void ValidateInstallDirectory_RejectsRootAndSystemDirectories()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            UninstallService.ValidateInstallDirectory(Path.GetPathRoot(Environment.SystemDirectory)!));
+        Assert.Throws<InvalidOperationException>(() =>
+            UninstallService.ValidateInstallDirectory(Environment.SystemDirectory));
+        Assert.Throws<InvalidOperationException>(() =>
+            UninstallService.ValidateInstallDirectory(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp")));
     }
 }

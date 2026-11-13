@@ -26,19 +26,21 @@ internal static class Program
         try
         {
             InstallerLog.Write("installer process start");
+            Forms.Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+            InstallerMetrics.MeasureDpi();
+            Forms.Application.EnableVisualStyles();
+            Forms.Application.SetCompatibleTextRenderingDefault(false);
             Forms.Application.SetUnhandledExceptionMode(Forms.UnhandledExceptionMode.CatchException);
             Forms.Application.ThreadException += (_, eventArgs) =>
                 InstallerLog.Write("installer UI exception", eventArgs.Exception);
-            try
+
+            if (args.Any(argument => argument.Equals("--silent", StringComparison.OrdinalIgnoreCase)))
             {
-                Forms.Application.EnableVisualStyles();
+                RunSilentInstall();
+                return;
             }
-            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
-            {
-                InstallerLog.Write("visual styles unavailable", ex);
-            }
-            Forms.Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new InstallProgressForm());
+
+            Forms.Application.Run(new InstallerWindow());
         }
         catch (Exception ex)
         {
@@ -51,29 +53,54 @@ internal static class Program
         }
     }
 
-    internal static void Install(Action<InstallProgress> report)
+    private static void RunSilentInstall()
     {
-        var target = InstallDirectory();
+        try
+        {
+            Install(new InstallRequest(DefaultInstallDirectory(), LaunchAfterInstall: false),
+                new Progress<InstallProgress>(_ => { }), CancellationToken.None);
+            Environment.ExitCode = 0;
+        }
+        catch (Exception ex)
+        {
+            InstallerLog.Write("silent install failed", ex);
+            Environment.ExitCode = 1;
+        }
+    }
+
+    /// <summary>
+    /// 解压 + 目录替换 + 注册 + 快捷方式。取消语义：
+    /// 替换目录之前取消 = 删 staging；替换之后取消 = 反向把 backup 换回来。
+    /// </summary>
+    internal static void Install(InstallRequest request, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
+    {
+        var target = Path.GetFullPath(request.TargetDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var parent = Path.GetDirectoryName(target) ?? throw new InvalidOperationException("无法确定安装目录。");
         var staging = Path.Combine(parent, $".staging-{Guid.NewGuid():N}");
         var backup = Path.Combine(parent, $".backup-{Guid.NewGuid():N}");
         var targetExisted = Directory.Exists(target);
         var registrySnapshot = UninstallRegistrySnapshot.Capture();
+        var shortcuts = new List<string>();
+        var previousInstallMoved = false;
+        var replaced = false;
 
         InstallerLog.Write($"install start target=\"{target}\"");
         try
         {
-            report(new(5, "正在准备安装目录..."));
+            progress.Report(new(0, "正在准备安装目录...", InstallStage.Prepare));
             Directory.CreateDirectory(parent);
             StopExistingApplication(target);
+            CleanupStaleStaging(parent);
             Directory.CreateDirectory(staging);
+            cancellationToken.ThrowIfCancellationRequested();
+            progress.Report(new(5, "安装目录准备完成。", InstallStage.Prepare));
 
-            report(new(15, "正在解压程序文件..."));
             using var payload = Assembly.GetExecutingAssembly()
                 .GetManifestResourceStream("SchoolNetAutoAuth.payload.zip")
                 ?? throw new InvalidDataException("安装包内容缺失。");
             using var archive = new ZipArchive(payload, ZipArchiveMode.Read);
-            ExtractArchive(archive, staging, report);
+            ExtractArchive(archive, staging, progress, cancellationToken);
 
             var stagedExe = Path.Combine(staging, ExeName);
             if (!File.Exists(stagedExe))
@@ -87,42 +114,41 @@ internal static class Program
                     $"已安装更高版本 {installedVersion}，不能降级到 {applicationVersion}。");
             }
 
-            report(new(76, "正在安全替换旧版本..."));
-            var previousInstallMoved = false;
+            cancellationToken.ThrowIfCancellationRequested();
+            progress.Report(new(76, "正在安全替换旧版本...", InstallStage.Replace));
             if (targetExisted)
             {
                 Directory.Move(target, backup);
                 previousInstallMoved = true;
             }
 
-            try
-            {
-                Directory.Move(staging, target);
-                var appExe = Path.Combine(target, ExeName);
+            Directory.Move(staging, target);
+            replaced = true;
+            var appExe = Path.Combine(target, ExeName);
 
-                report(new(80, "正在注册开机启动..."));
-                RegisterStartup(appExe);
-                report(new(86, "正在写入卸载信息..."));
-                WriteUninstallRegistration(appExe, applicationVersion);
-                report(new(92, "正在创建开始菜单快捷方式..."));
-                CreateShortcuts(appExe);
-                report(new(96, "正在启动主程序..."));
+            // 目录移动是原子的，取消只在移动完成后生效：随后整段反向回滚。
+            cancellationToken.ThrowIfCancellationRequested();
+            progress.Report(new(80, "正在写入卸载信息...", InstallStage.Register));
+            WriteUninstallRegistration(appExe, applicationVersion);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            progress.Report(new(88, "正在创建快捷方式...", InstallStage.Register));
+            CreateShortcuts(appExe, shortcuts);
+
+            if (request.LaunchAfterInstall)
+            {
+                progress.Report(new(96, "正在启动主程序...", InstallStage.Launch));
                 StartApplication(appExe);
             }
-            catch (Exception installError)
-            {
-                InstallerLog.Write("install rollback", installError);
-                RollBackInstall(target, backup, previousInstallMoved);
-                registrySnapshot.TryRestore();
-                throw;
-            }
 
+            progress.Report(new(94, "正在清理旧版本备份...", InstallStage.Register));
             TryDeleteDirectory(backup);
+            progress.Report(new(100, "安装完成。", InstallStage.Launch));
             InstallerLog.Write($"install complete version={applicationVersion}");
         }
-        catch (Exception ex)
+        catch
         {
-            InstallerLog.Write("install failed", ex);
+            RollBackInstall(target, backup, previousInstallMoved, replaced, shortcuts, registrySnapshot);
             throw;
         }
         finally
@@ -131,26 +157,78 @@ internal static class Program
         }
     }
 
-    private static void ExtractArchive(ZipArchive archive, string target, Action<InstallProgress> report)
+    private static void ExtractArchive(
+        ZipArchive archive,
+        string target,
+        IProgress<InstallProgress> progress,
+        CancellationToken cancellationToken)
     {
         var entries = archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)).ToArray();
+        var targetFull = Path.GetFullPath(target).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
         for (var index = 0; index < entries.Length; index++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var entry = entries[index];
             var destination = Path.GetFullPath(Path.Combine(target, entry.FullName));
-            if (!destination.StartsWith(
-                    Path.GetFullPath(target).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar,
-                    StringComparison.OrdinalIgnoreCase))
-            {
+            if (!destination.StartsWith(targetFull, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("安装包包含非法路径。");
-            }
 
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
             entry.ExtractToFile(destination, overwrite: true);
-            report(new(
-                15 + (int)((index + 1) * 60.0 / entries.Length),
-                $"正在解压程序文件（{index + 1}/{entries.Length}）..."));
+            var percent = 5 + (int)((index + 1) * 70.0 / entries.Length);
+            progress.Report(new(percent, $"正在解压程序文件（{index + 1}/{entries.Length}）...",
+                InstallStage.Extract, index + 1, entries.Length));
         }
+    }
+
+    /// <summary>卸载信息写到 HKCU；写入前的旧值进快照，回滚时恢复。</summary>
+    private static void WriteUninstallRegistration(string appExe, string applicationVersion)
+    {
+        var registration = InstallRegistration.Create(appExe);
+        using var uninstall = Registry.CurrentUser.CreateSubKey(UninstallKeyPath)
+            ?? throw new InvalidOperationException("无法写入卸载信息。");
+        uninstall.SetValue("DisplayName", AppName);
+        uninstall.SetValue("DisplayVersion", applicationVersion);
+        uninstall.SetValue("Publisher", "SchoolNetAutoAuth");
+        uninstall.SetValue("InstallLocation", Path.GetDirectoryName(appExe) ?? DefaultInstallDirectory());
+        uninstall.SetValue("DisplayIcon", appExe);
+        uninstall.SetValue("UninstallString", registration.UninstallString);
+        uninstall.SetValue("QuietUninstallString", registration.QuietUninstallString);
+        uninstall.SetValue("NoModify", 1, RegistryValueKind.DWord);
+        uninstall.SetValue("NoRepair", 1, RegistryValueKind.DWord);
+    }
+
+    /// <summary>每创建一个就登记路径：中途失败时回滚也能把已生成的 .lnk 删干净。</summary>
+    private static void CreateShortcuts(string appExe, ICollection<string> created)
+    {
+        var shellType = Type.GetTypeFromProgID("WScript.Shell")
+            ?? throw new InvalidOperationException("无法创建快捷方式。");
+        dynamic shell = Activator.CreateInstance(shellType)!;
+        var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+        var paths = new[]
+        {
+            Path.Combine(programs, AppName + ".lnk"),
+            Path.Combine(programs, "卸载" + AppName + ".lnk"),
+            Path.Combine(desktop, AppName + ".lnk")
+        };
+
+        CreateShortcut(shell, paths[0], appExe, string.Empty, Path.GetDirectoryName(appExe), AppName, created);
+        CreateShortcut(shell, paths[1], appExe, "--uninstall", Path.GetDirectoryName(appExe), "卸载" + AppName, created);
+        CreateShortcut(shell, paths[2], appExe, string.Empty, Path.GetDirectoryName(appExe), AppName, created);
+    }
+
+    private static void CreateShortcut(dynamic shell, string path, string target, string arguments,
+        string? workingDirectory, string description, ICollection<string> created)
+    {
+        created.Add(path);
+        dynamic shortcut = shell.CreateShortcut(path);
+        shortcut.TargetPath = target;
+        if (arguments.Length > 0) shortcut.Arguments = arguments;
+        shortcut.IconLocation = target + ",0";
+        if (!string.IsNullOrEmpty(workingDirectory)) shortcut.WorkingDirectory = workingDirectory;
+        shortcut.Description = description;
+        shortcut.Save();
     }
 
     private static void StopExistingApplication(string installDirectory)
@@ -170,6 +248,10 @@ internal static class Program
                 process.Kill(entireProcessTree: true);
                 process.WaitForExit(10_000);
             }
+            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException)
+            {
+                // 正在退出或权限不足时继续：替换目录会再失败一次并走回滚。
+            }
             finally
             {
                 process.Dispose();
@@ -177,12 +259,30 @@ internal static class Program
         }
     }
 
-    private static void RollBackInstall(string target, string backup, bool previousInstallMoved)
+    private static void RollBackInstall(
+        string target,
+        string backup,
+        bool previousInstallMoved,
+        bool replaced,
+        IReadOnlyList<string> shortcuts,
+        UninstallRegistrySnapshot registrySnapshot)
     {
+        InstallerLog.Write("install rollback");
         StopExistingApplication(target);
-        TryDeleteDirectory(target);
+        if (replaced) TryDeleteDirectory(target);
         if (previousInstallMoved && Directory.Exists(backup))
-            Directory.Move(backup, target);
+        {
+            try { Directory.Move(backup, target); }
+            catch (Exception ex) { InstallerLog.Write("rollback restore failed", ex); }
+        }
+
+        foreach (var shortcut in shortcuts)
+        {
+            try { if (File.Exists(shortcut)) File.Delete(shortcut); }
+            catch (Exception ex) { InstallerLog.Write($"shortcut cleanup failed path=\"{shortcut}\"", ex); }
+        }
+
+        registrySnapshot.TryRestore();
     }
 
     private static void StartApplication(string appExe)
@@ -191,22 +291,6 @@ internal static class Program
             ?? throw new InvalidOperationException("无法启动主程序。");
         if (application.WaitForExit(3000))
             throw new InvalidOperationException($"主程序启动失败，退出代码：{application.ExitCode}。");
-    }
-
-    private static void WriteUninstallRegistration(string appExe, string applicationVersion)
-    {
-        var registration = InstallRegistration.Create(appExe);
-        using var uninstall = Registry.CurrentUser.CreateSubKey(UninstallKeyPath)
-            ?? throw new InvalidOperationException("无法写入卸载信息。");
-        uninstall.SetValue("DisplayName", AppName);
-        uninstall.SetValue("DisplayVersion", applicationVersion);
-        uninstall.SetValue("Publisher", "SchoolNetAutoAuth");
-        uninstall.SetValue("InstallLocation", Path.GetDirectoryName(appExe) ?? InstallDirectory());
-        uninstall.SetValue("DisplayIcon", appExe);
-        uninstall.SetValue("UninstallString", registration.UninstallString);
-        uninstall.SetValue("QuietUninstallString", registration.QuietUninstallString);
-        uninstall.SetValue("NoModify", 1, RegistryValueKind.DWord);
-        uninstall.SetValue("NoRepair", 1, RegistryValueKind.DWord);
     }
 
     private static string? ReadInstalledVersion(string target)
@@ -219,68 +303,21 @@ internal static class Program
         return uninstall?.GetValue("DisplayVersion") as string;
     }
 
-    private static void CreateShortcuts(string appExe)
-    {
-        var shellType = Type.GetTypeFromProgID("WScript.Shell")
-            ?? throw new InvalidOperationException("无法创建开始菜单快捷方式。");
-        dynamic shell = Activator.CreateInstance(shellType)!;
-        dynamic shortcut = shell.CreateShortcut(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), AppName + ".lnk"));
-        shortcut.TargetPath = appExe;
-        shortcut.IconLocation = appExe + ",0";
-        shortcut.WorkingDirectory = Path.GetDirectoryName(appExe);
-        shortcut.Description = AppName;
-        shortcut.Save();
-
-        dynamic uninstallShortcut = shell.CreateShortcut(
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "卸载" + AppName + ".lnk"));
-        uninstallShortcut.TargetPath = appExe;
-        uninstallShortcut.Arguments = "--uninstall";
-        uninstallShortcut.IconLocation = appExe + ",0";
-        uninstallShortcut.WorkingDirectory = Path.GetDirectoryName(appExe);
-        uninstallShortcut.Description = "卸载" + AppName;
-        uninstallShortcut.Save();
-    }
-
-    private static void RegisterStartup(string appExe)
+    private static void CleanupStaleStaging(string parent)
     {
         try
         {
-            var startInfo = new ProcessStartInfo("schtasks.exe")
+            if (!Directory.Exists(parent)) return;
+            foreach (var directory in Directory.EnumerateDirectories(parent, ".staging-*"))
             {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-            startInfo.ArgumentList.Add("/Create");
-            startInfo.ArgumentList.Add("/TN");
-            startInfo.ArgumentList.Add("SchoolNetAutoAuth");
-            startInfo.ArgumentList.Add("/SC");
-            startInfo.ArgumentList.Add("ONLOGON");
-            startInfo.ArgumentList.Add("/RL");
-            startInfo.ArgumentList.Add("LIMITED");
-            startInfo.ArgumentList.Add("/F");
-            startInfo.ArgumentList.Add("/TR");
-            startInfo.ArgumentList.Add($"\"{appExe}\" --background");
-            using var process = Process.Start(startInfo);
-            if (process is null) throw new InvalidOperationException("无法启动任务计划程序。");
-            process.WaitForExit();
-            if (process.ExitCode == 0)
-            {
-                using var oldRun = Registry.CurrentUser.OpenSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\Run",
-                    writable: true);
-                oldRun?.DeleteValue("CampusNetworkAutoAuth", throwOnMissingValue: false);
-                return;
+                if (DateTime.UtcNow - Directory.GetLastWriteTimeUtc(directory) <= TimeSpan.FromHours(24)) continue;
+                TryDeleteDirectory(directory);
             }
         }
-        catch
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // The registry Run key is the compatibility fallback.
+            InstallerLog.Write("staging cleanup failed", ex);
         }
-
-        using var run = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run")
-            ?? throw new InvalidOperationException("无法注册开机启动。");
-        run.SetValue("CampusNetworkAutoAuth", $"\"{appExe}\" --background");
     }
 
     private static void TryDeleteDirectory(string path)
@@ -296,10 +333,17 @@ internal static class Program
         }
     }
 
-    private static string InstallDirectory() => Path.Combine(
+    internal static string DefaultInstallDirectory() => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "Programs",
         "SchoolNetAutoAuth");
+
+    internal static string? ReadInstallLocation()
+    {
+        using var uninstall = Registry.CurrentUser.OpenSubKey(UninstallKeyPath);
+        var value = uninstall?.GetValue("InstallLocation") as string;
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
 
     private sealed class UninstallRegistrySnapshot
     {

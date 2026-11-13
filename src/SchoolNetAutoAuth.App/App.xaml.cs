@@ -85,27 +85,54 @@ public partial class App : Microsoft.UI.Xaml.Application
         tray.ExitRequested += (_, _) => _dispatcher.TryEnqueue(async () => await ExitApplicationAsync());
 
         var controller = _services.GetRequiredService<AppController>();
+        var dialogs = _services.GetRequiredService<DialogService>();
         controller.SnapshotChanged += (_, snapshot) => _dispatcher.TryEnqueue(() =>
             tray.UpdateStatus(StatusViewModel.FormatAuthenticationState(snapshot.AuthenticationState)));
         controller.NoticeRaised += (_, notice) => _dispatcher.TryEnqueue(() =>
             _services.GetRequiredService<DesktopNotificationService>().Show(notice));
 
-        var background = commandLine.Contains("--background", StringComparer.OrdinalIgnoreCase);
-        if (background) windows.Hide();
+        // 未配置时托盘「立即认证」没有意义，置灰并引导去设置页。
+        void ApplyTrayAuthenticationState() => tray.SetAuthenticateEnabled(controller.Settings.IsConfigured);
+        controller.SettingsChanged += (_, _) => _dispatcher.TryEnqueue(ApplyTrayAuthenticationState);
+        controller.ConfigurationRequired += (_, _) =>
+            _dispatcher.TryEnqueue(async () => await dialogs.ShowFirstRunAsync());
+
+        var backgroundRequested = commandLine.Contains("--background", StringComparer.OrdinalIgnoreCase);
+        if (backgroundRequested) windows.Hide();
         else _window.Activate();
         await controller.InitializeAsync();
+        ApplyTrayAuthenticationState();
+
+        // 未配置的 --background 启动不进托盘静默：直接亮出主窗口，否则用户看不到任何提示。
+        if (backgroundRequested && !controller.Settings.IsConfigured) windows.Show();
+
+        if (!controller.Settings.IsConfigured && !controller.Settings.FirstRunPromptShown)
+        {
+            // 让 XamlRoot 完成挂载；窗口刚 Activate 时立刻弹 ContentDialog 会拿不到根。
+            await Task.Delay(400);
+            try { await dialogs.ShowFirstRunAsync(); }
+            catch (Exception ex)
+            {
+                _services.GetRequiredService<RollingFileLogger>().Write(new(AppLogEvent.UnexpectedError,
+                    Message: "first_run_prompt_failed",
+                    TechnicalDetail: ex.Message));
+            }
+        }
     }
 
     private static ServiceProvider BuildServices()
     {
         var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SchoolNetAutoAuth");
         var services = new ServiceCollection();
-        services.AddSingleton<ISettingsStore>(_ => new JsonSettingsStore(root));
+        services.AddSingleton(_ => new RollingFileLogger(Path.Combine(root, "SchoolNetAutoAuth.log")));
+        services.AddSingleton<ISettingsStore>(provider =>
+            new JsonSettingsStore(root, provider.GetRequiredService<RollingFileLogger>()));
         services.AddSingleton<ICourseScheduleStore>(_ => new JsonCourseScheduleStore(root));
         services.AddSingleton<WindowsCredentialStore>();
         services.AddSingleton<ICredentialStore>(provider => provider.GetRequiredService<WindowsCredentialStore>());
         services.AddSingleton<WindowsWifiMonitor>();
         services.AddSingleton<INetworkMonitor>(provider => provider.GetRequiredService<WindowsWifiMonitor>());
+        services.AddSingleton<IWifiScanner>(provider => provider.GetRequiredService<WindowsWifiMonitor>());
         services.AddSingleton<HttpConnectivityProbe>();
         // 联网判定以系统网络状态为主、HTTP 认证页检测为辅，而不是"能打开某个网站"。
         services.AddSingleton<IConnectivityProbe>(provider => new SystemAwareConnectivityProbe(
@@ -120,7 +147,6 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddSingleton<AuthenticationCoordinator>();
         services.AddSingleton<RegistryStartupManager>();
         services.AddSingleton<StartupTaskManager>();
-        services.AddSingleton(_ => new RollingFileLogger(Path.Combine(root, "SchoolNetAutoAuth.log")));
         services.AddSingleton(_ => new SystemActionService(root));
         services.AddSingleton<CourseScheduleSerializer>();
         services.AddSingleton<WordCourseScheduleImporter>();
